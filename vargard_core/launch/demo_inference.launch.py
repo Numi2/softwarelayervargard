@@ -13,25 +13,34 @@ def generate_launch_description():
     sensors_yaml = os.path.join(sensor_pkg, 'sensors.yaml')
     rules_yaml = os.path.join(core_pkg, '..', 'rules.yaml')
 
+    # Optionally enable SROS2 security if keystore exists
+    ROOT_DIR = os.getcwd()
+    KEYSTORE = os.path.join(ROOT_DIR, 'security', 'keystore')
+    enclave_args = []
+    if os.path.isdir(KEYSTORE):
+        enclave_args = ['--ros-args', '--enclave', KEYSTORE]
     return LaunchDescription([
         Node(
             package='vargard_sensor_layer',
             executable='sensor_node',
             name='sensor_node',
             output='screen',
-            parameters=[{'config_file': sensors_yaml}]
+            parameters=[{'config_file': sensors_yaml}],
+            arguments=enclave_args
         ),
         Node(
             package='vargard_core',
             executable='inference_node',
             name='inference_node',
-            output='screen'
+            output='screen',
+            arguments=enclave_args
         ),
         Node(
             package='vargard_core',
             executable='event_manager',
             name='event_manager',
             output='screen',
-            parameters=[{'rules_file': rules_yaml}]
+            parameters=[{'rules_file': rules_yaml}],
+            arguments=enclave_args
         ),
     ])

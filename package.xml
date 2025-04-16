@@ -11,9 +11,12 @@
   <build_depend>rosidl_default_generators</build_depend>
   <exec_depend>rosidl_default_runtime</exec_depend>
   <depend>rclpy</depend>
+  <depend>diagnostic_updater</depend>
+  <depend>diagnostic_msgs</depend>
   <depend>sensor_msgs</depend>
   <depend>std_msgs</depend>
   <depend>cv_bridge</depend>
   <exec_depend>python3-opencv</exec_depend>
   <exec_depend>pyserial</exec_depend>
+  <exec_depend>ros-${ROS_DISTRO}-diagnostic-updater</exec_depend>
 </package>

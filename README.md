@@ -76,3 +76,52 @@ Topics published:
   - /sensor/<sensor_id>/camera_info (CameraInfo)
   - /diagnostics (DiagnosticArray) [if enable_diagnostics=True]
   - TF:<sensor_id> w.r.t. parent_frame [if extrinsics provided]
+  
+## Security & Reliability (Sprint 4)
+
+We’ve enhanced the system with SROS2 (DDS) security, container hardening, and runtime diagnostics.
+
+### DDS Security
+
+1. Generate a new keystore (node certificates) for each component:
+
+   ```bash
+   bash security/setup_security.sh
+   ```
+
+   This creates `security/keystore` containing keys for:
+   - sensor_layer_node
+   - inference_node
+   - event_manager
+
+2. Launch your nodes with the enclave argument:
+
+   ```bash
+   ros2 run vargard_sensor_layer sensor_node \
+     --ros-args --enclave security/keystore \
+     -p enable_diagnostics:=True
+
+   ros2 run vargard_core inference_node \
+     --ros-args --enclave security/keystore \
+     -p enable_diagnostics:=True
+
+   ros2 run vargard_core event_manager \
+     --ros-args -p rules_file:=rules.yaml \
+     --enclave security/keystore -p enable_diagnostics:=True
+   ```
+
+### Container Hardening
+
+- All containers run as a non-root user `vargard` and drop unnecessary Linux capabilities.
+- Logs are written in structured JSON to `/var/log/vargard/` inside each container:
+  - sensor_node.log
+  - inference_node.log
+  - event_manager.log
+
+### Healthchecks & Diagnostics
+
+- When `enable_diagnostics` is `True`, each node publishes a `DiagnosticArray` on `/diagnostics` every second, reporting node heartbeat.
+- The provided `docker-compose.yml` includes healthchecks that verify:
+  - sensor topics (`/sensor/*`) are active
+  - inference events (`/vargard/events/*`) are active
+  - alerts topic (`/vargard/alerts`) is active

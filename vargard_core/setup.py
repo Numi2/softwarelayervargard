@@ -19,6 +19,8 @@ setup(
         'pkg_resources',
         'pyyaml',
         'requests',
+        'psutil',
+        'paho-mqtt',
     ],
     zip_safe=True,
     maintainer='Vargard Team',
@@ -28,7 +30,8 @@ setup(
     entry_points={
         'console_scripts': [
             'inference_node = vargard_core.inference_node:main',
-            'event_manager = vargard_core.event_manager:main'
+            'event_manager = vargard_core.event_manager:main',
+            'telemetry_node = vargard_core.telemetry_node:main'
         ],
         'vargard.inference_plugins': [
             'yolov5 = vargard_core.plugins.yolov5:YOLOv5Plugin'

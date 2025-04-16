@@ -9,10 +9,23 @@ from sensor_msgs.msg import Image, CameraInfo
 from std_msgs.msg import String
 from cv_bridge import CvBridge
 import pkg_resources
+import os
+from diagnostic_updater import Updater
+from diagnostic_msgs.msg import DiagnosticArray, DiagnosticStatus
 
 class InferenceNode(Node):
     def __init__(self):
         super().__init__('inference_node')
+        # Diagnostics support
+        self.declare_parameter('enable_diagnostics', False)
+        self.enable_diagnostics = self.get_parameter('enable_diagnostics').get_parameter_value().bool_value
+        self.updater = Updater(self)
+        self.updater.setHardwareID(self.get_name())
+        self.updater.add('Node Status', self._diag_status)
+        if self.enable_diagnostics:
+            qos_diag = QoSProfile(depth=10, reliability=QoSReliabilityPolicy.RELIABLE)
+            self.diag_pub = self.create_publisher(DiagnosticArray, '/diagnostics', qos_profile=qos_diag)
+        self.create_timer(1.0, self.updater.update)
         # Load plugins via entry points
         self.plugins = {}
         for ep in pkg_resources.iter_entry_points('vargard.inference_plugins'):
@@ -72,6 +85,11 @@ class InferenceNode(Node):
                 self.publishers[name].publish(s)
             except Exception as e:
                 self.get_logger().warn(f'Plugin {name} failed: {e}')
+
+    def _diag_status(self, stat):
+        """Basic diagnostic task for node heartbeat."""
+        stat.summary(DiagnosticStatus.OK, 'Node running')
+        return stat
 
 def main(args=None):
     rclpy.init(args=args)

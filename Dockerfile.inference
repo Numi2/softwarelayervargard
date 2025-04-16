@@ -13,16 +13,25 @@ RUN apt-get update && apt-get install -y \
     ros-${ROS_DISTRO}-cv-bridge \
     python3-opencv \
     python3-pip \
+    ros-${ROS_DISTRO}-diagnostic-updater \
     && rm -rf /var/lib/apt/lists/* && \
     pip3 install setuptools pkg_resources
 
 # Workspace setup
 WORKDIR /workspace
+# Create a non-root user, prepare log directory, and ensure ownership
+RUN useradd -ms /bin/bash vargard \
+    && mkdir -p /var/log/vargard \
+    && chown vargard:vargard /var/log/vargard \
+    && chown -R vargard:vargard /workspace
+USER vargard
+# Core code and DDS security assets
 COPY vargard_core /workspace/vargard_core
+COPY security /workspace/security
 
 # Build
 RUN source /opt/ros/${ROS_DISTRO}/setup.sh && \
     colcon build --packages-select vargard_core --symlink-install
 
-# Runtime
-ENTRYPOINT ["/bin/bash", "-lc", "source /workspace/install/setup.bash && ros2 run vargard_core inference_node"]
+# Runtime execution with DDS security and structured logs
+ENTRYPOINT ["/bin/bash", "-lc", "source /workspace/install/setup.bash && ros2 run vargard_core inference_node --ros-args --enclave /workspace/security/keystore > /var/log/vargard/inference_node.log 2>&1"]

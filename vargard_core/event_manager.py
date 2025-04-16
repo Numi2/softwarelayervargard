@@ -9,10 +9,23 @@ import rclpy
 from rclpy.node import Node
 from std_msgs.msg import String
 from vargard_core.msg import Alert
+from rclpy.qos import QoSProfile, QoSReliabilityPolicy
+from diagnostic_updater import Updater
+from diagnostic_msgs.msg import DiagnosticArray, DiagnosticStatus
 
 class EventManager(Node):
     def __init__(self):
         super().__init__('event_manager')
+        # Diagnostics support
+        self.declare_parameter('enable_diagnostics', False)
+        self.enable_diagnostics = self.get_parameter('enable_diagnostics').get_parameter_value().bool_value
+        self.updater = Updater(self)
+        self.updater.setHardwareID(self.get_name())
+        self.updater.add('Node Status', self._diag_status)
+        if self.enable_diagnostics:
+            qos_diag = QoSProfile(depth=10, reliability=QoSReliabilityPolicy.RELIABLE)
+            self.diag_pub = self.create_publisher(DiagnosticArray, '/diagnostics', qos_profile=qos_diag)
+        self.create_timer(1.0, self.updater.update)
         # Parameters
         self.declare_parameter('rules_file', '')
         rules_file = self.get_parameter('rules_file').get_parameter_value().string_value
@@ -36,6 +49,11 @@ class EventManager(Node):
 
         # Publisher for alerts
         self.alert_pub = self.create_publisher(Alert, '/vargard/alerts', 10)
+
+    def _diag_status(self, stat):
+        """Basic diagnostic task for node heartbeat."""
+        stat.summary(DiagnosticStatus.OK, 'Node running')
+        return stat
 
     def _event_cb(self, msg: String):
         try:

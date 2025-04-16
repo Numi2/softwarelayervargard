@@ -12,18 +12,27 @@ RUN apt-get update && apt-get install -y \
     ros-${ROS_DISTRO}-cv-bridge \
     python3-opencv \
     python3-serial \
+    ros-${ROS_DISTRO}-diagnostic-updater \
     && rm -rf /var/lib/apt/lists/*
 
 # Workspace setup
 WORKDIR /workspace
+# Create a non-root user, prepare log directory, and ensure ownership
+RUN useradd -ms /bin/bash vargard \
+    && mkdir -p /var/log/vargard \
+    && chown vargard:vargard /var/log/vargard \
+    && chown -R vargard:vargard /workspace
+USER vargard
 COPY vargard_sensor_layer /workspace/vargard_sensor_layer
 COPY setup.py /workspace/setup.py
 COPY package.xml /workspace/package.xml
 COPY CMakeLists.txt /workspace/CMakeLists.txt
+# Include DDS security assets
+COPY security /workspace/security
 
 # Build
 RUN source /opt/ros/${ROS_DISTRO}/setup.sh && \
     colcon build --packages-select vargard_sensor_layer --symlink-install
 
-# Runtime
-ENTRYPOINT ["/bin/bash", "-lc", "source /workspace/install/setup.bash && ros2 run vargard_sensor_layer sensor_node"]
+# Runtime execution with DDS security and structured logs
+ENTRYPOINT ["/bin/bash", "-lc", "source /workspace/install/setup.bash && ros2 run vargard_sensor_layer sensor_node --ros-args --enclave /workspace/security/keystore > /var/log/vargard/sensor_node.log 2>&1"]

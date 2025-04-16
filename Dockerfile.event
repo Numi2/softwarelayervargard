@@ -10,17 +10,27 @@ RUN apt-get update && apt-get install -y \
     ros-${ROS_DISTRO}-rclpy \
     ros-${ROS_DISTRO}-std-msgs \
     python3-pip \
+    ros-${ROS_DISTRO}-diagnostic-updater \
     && rm -rf /var/lib/apt/lists/* && \
     pip3 install pyyaml requests
 
 # Workspace setup
 WORKDIR /workspace
+# Create a non-root user and switch to it for runtime
+RUN useradd -ms /bin/bash vargard \
+    && mkdir -p /var/log/vargard \
+    && chown vargard:vargard /var/log/vargard \
+    && chown -R vargard:vargard /workspace
+USER vargard
 COPY vargard_core /workspace/vargard_core
 COPY rules.yaml /workspace/rules.yaml
+COPY security /workspace/security
 
 # Build
 RUN source /opt/ros/${ROS_DISTRO}/setup.sh && \
     colcon build --packages-select vargard_core --symlink-install
 
 # Runtime
-ENTRYPOINT ["/bin/bash", "-lc", "source /workspace/install/setup.bash && ros2 run vargard_core event_manager --ros-args -p rules_file:=/workspace/rules.yaml"]
+ENTRYPOINT ["/bin/bash", "-lc", \
+    "source /workspace/install/setup.bash && \
+     ros2 run vargard_core event_manager --ros-args -p rules_file:=/workspace/rules.yaml --enclave /workspace/security/keystore > /var/log/vargard/event_manager.log 2>&1" ]

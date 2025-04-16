@@ -46,11 +46,19 @@ class SensorNode(Node):
         self.ci_managers = {}
         self.extrinsics = {}
         self.sensor_objects = {}
-        # Diagnostics
+        # Diagnostics: ROS diagnostic_updater
+        from diagnostic_updater import Updater
+        # Create updater
+        self.updater = Updater(self)
+        self.updater.setHardwareID(self.get_name())
+        self.updater.add('Node Status', self._diag_status)
+        # Diagnostic array publisher
         if self.enable_diagnostics:
             self.last_data_time = {}
             qos_diag = QoSProfile(depth=10, reliability=QoSReliabilityPolicy.RELIABLE)
             self.diag_pub = self.create_publisher(DiagnosticArray, '/diagnostics', qos_profile=qos_diag)
+        # Timer for updater
+        self.create_timer(1.0, self.updater.update)
         # Initial sensor setup
         for sensor in self.manager.get_sensors():
             self._add_sensor(sensor)
@@ -221,6 +229,12 @@ class SensorNode(Node):
                 ds.message = 'OK'
             diag_arr.status.append(ds)
         self.diag_pub.publish(diag_arr)
+    def _diag_status(self, stat):
+        """
+        Basic diagnostic task for node heartbeat.
+        """
+        stat.summary(0, 'Node running')
+        return stat
 
 def main(args=None):
     rclpy.init(args=args)

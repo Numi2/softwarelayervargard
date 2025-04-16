@@ -10,6 +10,8 @@
   <buildtool_depend>rosidl_default_generators</buildtool_depend>
   <buildtool_depend>ament_cmake_python</buildtool_depend>
   <depend>rclpy</depend>
+  <depend>diagnostic_updater</depend>
+  <depend>diagnostic_msgs</depend>
   <depend>rosidl_default_runtime</depend>
   <depend>sensor_msgs</depend>
   <depend>std_msgs</depend>
@@ -18,4 +20,7 @@
   <exec_depend>pytest</exec_depend>
   <exec_depend>pyyaml</exec_depend>
   <exec_depend>requests</exec_depend>
+  <exec_depend>psutil</exec_depend>
+  <exec_depend>paho-mqtt</exec_depend>
+  <exec_depend>ros-${ROS_DISTRO}-diagnostic-updater</exec_depend>
 </package>
