@@ -125,3 +125,175 @@ We’ve enhanced the system with SROS2 (DDS) security, container hardening, and 
   - sensor topics (`/sensor/*`) are active
   - inference events (`/vargard/events/*`) are active
   - alerts topic (`/vargard/alerts`) is active
+
+## Telemetry & OTA (Sprint 5)
+
+### Telemetry Agent
+
+A new ROS 2 node `telemetry_node` gathers CPU, memory, temperature, network, and GPU stats and publishes them to MQTT:
+
+- Location: `vargard_core/telemetry_node.py`
+- Run with:
+  ```bash
+  ros2 run vargard_core telemetry_node \
+    --ros-args \
+    -p mqtt_broker:=<broker> -p mqtt_port:=<port> \
+    -p tls_ca_cert:=<ca.pem> -p tls_certfile:=<cert.pem> \
+    -p tls_keyfile:=<key.pem> \
+    -p telemetry_topic:=vargard/telemetry \
+    -p config_topic:=vargard/config \
+    -p publish_interval:=5.0
+  ```
+
+### Remote Config & OTA
+
+`telemetry_node` also listens on MQTT topic `vargard/config`:
+
+- `"sensors.yaml"` key: new sensors configuration YAML, written to `sensors.yaml`
+- `"update_image"` key: Docker image tag, triggers `/workspace/supervisor.sh <image>`
+
+### Dashboard Stub
+
+A basic Flask app under `dashboard/` subscribes to telemetry and alerts and exposes:
+
+- GET `/telemetry`: last N telemetry messages (`?n=10`)
+- GET `/alerts`: last N alerts (`?n=10`)
+- SSE streams:
+  - `/telemetry/stream`
+  - `/alerts/stream`
+
+To run the dashboard:
+```bash
+cd dashboard
+pip3 install -r requirements.txt
+python3 app.py
+```
+
+## Management CLI (Sprint 6)
+
+The `vargardctl` command provides easy orchestration of the Vargard stack:
+
+- `vargardctl list-sensors` - Show sensors from sensors.yaml or auto-detected.
+- `vargardctl list-plugins` - List registered inference plugins.
+- `vargardctl start` - Start the stack using Docker Compose.
+- `vargardctl stop` - Stop the stack.
+- `vargardctl logs` - Stream container logs.
+
+Install the CLI via pip:
+```bash
+pip install vargard_core
+```
+
+Run `vargardctl --help` for usage information.
+
+## Web UI (Sprint 6 - Next.js)
+
+A React-based dashboard built with Next.js is available in `web/`:
+
+```bash
+cd web
+npm install
+npm run dev
+```
+
+Open http://localhost:3000 to view real-time telemetry and alerts.
+
+## End-to-End Deployment Tutorial
+
+This guide walks through deploying the Vargard AI Brain on a Jetson Orin device, covering sensor setup, inference, event management, and alerting.
+
+### Prerequisites
+- NVIDIA Jetson Orin with JetPack 5.x and Ubuntu
+- ROS 2 (e.g., Humble) installed and sourced
+- Docker & Docker Compose installed
+- Python 3.8+ with pip
+- Git
+
+1. Clone the Repository
+   ```bash
+   git clone https://github.com/your-org/vargard.git
+   cd vargard
+   ```
+
+2. Install System Dependencies
+   ```bash
+   sudo apt update
+   sudo apt install \
+     python3-opencv python3-serial \
+     ros-humble-rclpy ros-humble-sensor-msgs ros-humble-cv-bridge \
+     docker.io docker-compose
+   ```
+
+3. Build the Sensor Layer
+   ```bash
+   cd vargard_sensor_layer
+   colcon build --packages-select vargard_sensor_layer
+   source install/setup.bash
+   ```
+
+4. Run the Sensor Node
+   ```bash
+   ros2 run vargard_sensor_layer sensor_node \
+     --ros-args -p config_file:=../sensors.yaml \
+                -p enable_diagnostics:=True
+   ```
+
+5. Build Core Packages
+   ```bash
+   cd ../vargard_core
+   colcon build --packages-select vargard_core
+   source install/setup.bash
+   ```
+
+6. Generate DDS Security Keys (optional)
+   ```bash
+   bash security/setup_security.sh
+   ```
+   This creates certificates under `security/keystore` for each node.
+
+7. Launch Inference and Event Manager
+   ```bash
+   # Inference node
+   ros2 run vargard_core inference_node \
+     --ros-args --enclave security/keystore \
+                -p model_path:=/path/to/model.onnx
+
+   # Event manager
+   ros2 run vargard_core event_manager \
+     --ros-args --enclave security/keystore \
+                -p rules_file:=../rules.yaml
+   ```
+
+8. Deploy with Docker Compose (optional)
+   ```bash
+   cd ..
+   docker-compose up -d
+   ```
+   This spins up sensor, inference, and event containers with healthchecks, logs, and security enabled.
+
+9. Use the CLI
+   ```bash
+   vargardctl list-sensors
+   vargardctl list-plugins
+   vargardctl logs
+   ```
+
+10. View the Web UI
+    ```bash
+    cd web
+    npm install
+    npm run dev
+    ```
+    Open http://localhost:3000 to monitor real-time telemetry and alerts.
+
+## Documentation
+
+Comprehensive documentation is available in `docs/`. To build the docs locally:
+
+```bash
+cd docs
+pip install sphinx
+make html
+```
+
+The generated HTML site will be in `docs/_build/html`.

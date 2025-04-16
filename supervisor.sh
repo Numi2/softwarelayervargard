@@ -2,6 +2,33 @@
 # Supervisor script to launch and monitor all Vargard components
 set -e
 
+# OTA update via Docker Compose when image argument is provided
+if [ "$#" -gt 0 ]; then
+  IMAGE="$1"
+  echo "[supervisor] OTA update requested: ${IMAGE}"
+  # Ensure docker-compose is available
+  if command -v docker-compose >/dev/null 2>&1; then
+    COMPOSE_CMD="docker-compose"
+  elif command -v docker >/dev/null 2>&1; then
+    COMPOSE_CMD="docker compose"
+  else
+    echo "[supervisor] Error: docker compose not found. Cannot perform OTA update." >&2
+    exit 1
+  fi
+  # Ensure compose file exists
+  if [ ! -f docker-compose.yml ]; then
+    echo "[supervisor] Error: docker-compose.yml not found in $(pwd)." >&2
+    exit 1
+  fi
+  # Pull latest images and restart containers
+  echo "[supervisor] Pulling latest images..."
+  $COMPOSE_CMD pull || { echo "[supervisor] docker-compose pull failed." >&2; exit 1; }
+  echo "[supervisor] Restarting services..."
+  $COMPOSE_CMD up -d || { echo "[supervisor] docker-compose up failed." >&2; exit 1; }
+  echo "[supervisor] OTA update complete."
+  exit 0
+fi
+
 function cleanup {
   echo "[supervisor] Shutting down services..."
   pkill -f sensor_node || true
