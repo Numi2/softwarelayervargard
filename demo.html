@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Vargard AI Edge Platform Demo</title>
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Highlight.js for code snippets -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css">
+</head>
+<body>
+  <!-- Navigation -->
+  <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="#">Vargard Demo</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item"><a class="nav-link" href="#overview">Overview</a></li>
+          <li class="nav-item"><a class="nav-link" href="#sensor">Sensor Layer</a></li>
+          <li class="nav-item"><a class="nav-link" href="#inference">Inference Layer</a></li>
+          <li class="nav-item"><a class="nav-link" href="#events">Event Manager</a></li>
+          <li class="nav-item"><a class="nav-link" href="#telemetry">Telemetry & UI</a></li>
+          <li class="nav-item"><a class="nav-link" href="#orchestration">Orchestration</a></li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Header -->
+  <header class="py-5 text-center bg-light">
+    <div class="container">
+      <h1 class="display-5 fw-bold">Vargard AI Edge Platform</h1>
+      <p class="lead">Modular, secure, containerized ROS 2–based pipeline for intelligent sensing and alerting.</p>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="container my-5">
+    <!-- Overview -->
+    <section id="overview" class="mb-5">
+      <h2>Overview</h2>
+      <p>Vargard is a full-stack edge AI solution:</p>
+      <ul>
+        <li>Automatic sensor detection and hot‑plug support</li>
+        <li>Pluggable inference plugins (YOLOv8, etc.)</li>
+        <li>User‑defined event rules and alerting</li>
+        <li>System telemetry, remote config & OTA updates</li>
+        <li>Containerized deployment & orchestration via Docker Compose</li>
+        <li>Lightweight web dashboard & CLI tooling</li>
+      </ul>
+    </section>
+
+    <!-- Sensor Layer -->
+    <section id="sensor" class="mb-5">
+      <h2>Sensor Layer</h2>
+      <p>Auto-detects cameras and radar, publishes standardized ROS 2 topics.</p>
+      <pre><code class="bash"># Launch sensor node
+ros2 run vargard_sensor_layer sensor_node \
+  --ros-args -p hotplug_interval:=5.0 -p enable_diagnostics:=True</code></pre>
+    </section>
+
+    <!-- Inference Layer -->
+    <section id="inference" class="mb-5">
+      <h2>Inference Layer</h2>
+      <p>Loads YOLOv8 (or custom) plugins to process image streams and emit JSON events.</p>
+      <pre><code class="yaml"># Example inference rule
+- name: person_detected
+  plugin: yolov8
+  condition:
+    class: person
+    confidence_gt: 0.5
+  action:
+    type: webhook
+    url: http://localhost:8000/alert</code></pre>
+    </section>
+
+    <!-- Event Manager -->
+    <section id="events" class="mb-5">
+      <h2>Event Manager</h2>
+      <p>Applies user rules to events and publishes alerts (ROS 2 & webhooks).</p>
+      <pre><code class="bash">ros2 run vargard_core event_manager \
+  --ros-args -p rules_file:=rules.yaml -p enable_diagnostics:=True</code></pre>
+    </section>
+
+    <!-- Telemetry & UI -->
+    <section id="telemetry" class="mb-5">
+      <h2>Telemetry & Web UI</h2>
+      <p>Collects system metrics, streams to MQTT, visualized in Flask dashboard and Next.js.</p>
+      <pre><code class="bash"># Start Flask dashboard
+cd dashboard && pip3 install -r requirements.txt && python3 app.py
+# Next.js UI
+cd web && npm install && npm run dev</code></pre>
+    </section>
+
+    <!-- Orchestration -->
+    <section id="orchestration" class="mb-5">
+      <h2>Containerization & Orchestration</h2>
+      <p>Single-command startup with Docker Compose:</p>
+      <pre><code class="yaml">version: '3.8'
+services:
+  sensor:
+    build: Dockerfile.sensor
+  inference:
+    build: Dockerfile.inference
+  event:
+    build: Dockerfile.event</code></pre>
+      <p><strong>Start all services:</strong></p>
+      <pre><code class="bash">docker-compose up -d</code></pre>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer class="text-center py-4 bg-dark text-white">
+    <div class="container">
+      <p class="mb-0">© Vargard Team</p>
+    </div>
+  </footer>
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- Highlight.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+  <script>hljs.highlightAll();</script>
+</body>
+</html>

@@ -1,6 +1,6 @@
 rules:
   - name: person_detected
-    plugin: yolov5
+    plugin: yolov8
     condition:
       class: person
       confidence_gt: 0.5
