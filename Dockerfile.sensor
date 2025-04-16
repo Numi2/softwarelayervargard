@@ -1,0 +1,29 @@
+# Dockerfile for Vargard Sensor Layer
+FROM nvcr.io/nvidia/l4t-base:r35.1.0
+
+# Arguments
+ARG ROS_DISTRO=humble
+
+# Install ROS 2 and dependencies
+RUN apt-get update && apt-get install -y \
+    python3-colcon-common-extensions \
+    ros-${ROS_DISTRO}-rclpy \
+    ros-${ROS_DISTRO}-sensor-msgs \
+    ros-${ROS_DISTRO}-cv-bridge \
+    python3-opencv \
+    python3-serial \
+    && rm -rf /var/lib/apt/lists/*
+
+# Workspace setup
+WORKDIR /workspace
+COPY vargard_sensor_layer /workspace/vargard_sensor_layer
+COPY setup.py /workspace/setup.py
+COPY package.xml /workspace/package.xml
+COPY CMakeLists.txt /workspace/CMakeLists.txt
+
+# Build
+RUN source /opt/ros/${ROS_DISTRO}/setup.sh && \
+    colcon build --packages-select vargard_sensor_layer --symlink-install
+
+# Runtime
+ENTRYPOINT ["/bin/bash", "-lc", "source /workspace/install/setup.bash && ros2 run vargard_sensor_layer sensor_node"]

@@ -1,0 +1,10 @@
+image:
+  sensor:
+    repository: vargard/sensor
+    tag: latest
+  inference:
+    repository: vargard/inference
+    tag: latest
+  event:
+    repository: vargard/event
+    tag: latest

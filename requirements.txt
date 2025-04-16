@@ -1,0 +1,7 @@
+torch
+opencv-python
+pyyaml
+requests
+pytest
+flake8
+mypy

@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "vargard.name" . }}-all
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ include "vargard.name" . }}-all
+  template:
+    metadata:
+      labels:
+        app: {{ include "vargard.name" . }}-all
+    spec:
+      hostNetwork: true
+      containers:
+        - name: sensor
+          image: "{{ .Values.image.sensor.repository }}:{{ .Values.image.sensor.tag }}"
+        - name: inference
+          image: "{{ .Values.image.inference.repository }}:{{ .Values.image.inference.tag }}"
+        - name: event
+          image: "{{ .Values.image.event.repository }}:{{ .Values.image.event.tag }}"

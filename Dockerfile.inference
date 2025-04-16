@@ -1,0 +1,28 @@
+# Dockerfile for Vargard Inference Layer
+FROM nvcr.io/nvidia/l4t-pytorch:r35.1.0-pth1.12-py3
+
+# Arguments
+ARG ROS_DISTRO=humble
+
+# Install ROS 2 and Python dependencies
+RUN apt-get update && apt-get install -y \
+    python3-colcon-common-extensions \
+    ros-${ROS_DISTRO}-rclpy \
+    ros-${ROS_DISTRO}-sensor-msgs \
+    ros-${ROS_DISTRO}-std-msgs \
+    ros-${ROS_DISTRO}-cv-bridge \
+    python3-opencv \
+    python3-pip \
+    && rm -rf /var/lib/apt/lists/* && \
+    pip3 install setuptools pkg_resources
+
+# Workspace setup
+WORKDIR /workspace
+COPY vargard_core /workspace/vargard_core
+
+# Build
+RUN source /opt/ros/${ROS_DISTRO}/setup.sh && \
+    colcon build --packages-select vargard_core --symlink-install
+
+# Runtime
+ENTRYPOINT ["/bin/bash", "-lc", "source /workspace/install/setup.bash && ros2 run vargard_core inference_node"]

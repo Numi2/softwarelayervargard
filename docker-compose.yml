@@ -1,0 +1,50 @@
+version: '3.8'
+services:
+  sensor:
+    build:
+      context: .
+      dockerfile: Dockerfile.sensor
+    network_mode: host
+    volumes:
+      - ./sensors.yaml:/workspace/sensors.yaml:ro
+    environment:
+      - ROS_DOMAIN_ID=0
+    healthcheck:
+      test: ["CMD", "bash", "-lc", "ros2 topic list | grep /sensor"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  inference:
+    build:
+      context: .
+      dockerfile: Dockerfile.inference
+    network_mode: host
+    depends_on:
+      sensor:
+        condition: service_healthy
+    environment:
+      - ROS_DOMAIN_ID=0
+    healthcheck:
+      test: ["CMD", "bash", "-lc", "ros2 topic list | grep /vargard/events"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  event:
+    build:
+      context: .
+      dockerfile: Dockerfile.event
+    network_mode: host
+    depends_on:
+      inference:
+        condition: service_healthy
+    volumes:
+      - ./rules.yaml:/workspace/rules.yaml:ro
+    environment:
+      - ROS_DOMAIN_ID=0
+    healthcheck:
+      test: ["CMD", "bash", "-lc", "ros2 topic list | grep /vargard/alerts"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
