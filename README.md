@@ -76,6 +76,25 @@ Topics published:
   - /sensor/<sensor_id>/camera_info (CameraInfo)
   - /diagnostics (DiagnosticArray) [if enable_diagnostics=True]
   - TF:<sensor_id> w.r.t. parent_frame [if extrinsics provided]
+
+### Auto-Detection & Plug‑n‑Play
+
+The sensor layer provides true plug‑n‑play behavior by dynamically discovering,
+adding, and removing sensors at runtime:
+
+- **SensorManager** scans available hardware:
+  - USB cameras (`/dev/video*`) via OpenCV, detecting FLIR thermal cams using `v4l2-ctl`.
+  - Jetson CSI camera through `nvarguscamerasrc` (GStreamer).
+  - UART radar devices on `/dev/ttyUSB*` and `/dev/ttyACM*`.
+  - If no devices are found, it falls back to loading entries from `sensors.yaml`.
+- Each detected device is instantiated as a driver (`UsbCamera`, `CsiCamera`, `FlirSensor`, `RadarSensor`), exposing a unique `sensor_id`.
+- **SensorNode** publishes data on `/sensor/<sensor_id>` (and `/sensor/<sensor_id>/camera_info` for cameras), and:
+  - Uses a hotplug timer (default 5 s) to re-scan and detect additions/removals.
+  - Dynamically creates or destroys ROS 2 publishers, TF broadcasters, and calibration handlers.
+  - Cleans up resources when a sensor is unplugged.
+
+Within seconds of plugging in a new camera or sensor, its ROS topic appears automatically;
+removing the device gracefully unpublishes its topic, ensuring seamless plug‑n‑play operation.
   
 ## Security & Reliability (Sprint 4)
 
