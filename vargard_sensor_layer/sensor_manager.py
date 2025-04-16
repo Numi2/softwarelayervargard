@@ -21,6 +21,8 @@ class SensorManager:
         self._detect_sensors()
 
     def _detect_sensors(self):
+        # Reset sensor list before (re)detecting
+        self.sensors = []
         detected = []
         # Detect USB cameras (/dev/video*)
         video_devices = glob.glob('/dev/video*')
@@ -54,6 +56,7 @@ class SensorManager:
             detected.append(('radar', port))
 
         if detected:
+            # Instantiate detected sensors
             for sensor_type, conn in detected:
                 try:
                     if sensor_type == 'usb_camera':
@@ -69,11 +72,15 @@ class SensorManager:
                         sensor = RadarSensor(conn)
                     else:
                         continue
+                    # No calibration or extrinsics for auto-detected sensors
+                    setattr(sensor, 'calibration_file', None)
+                    setattr(sensor, 'parent_frame', None)
+                    setattr(sensor, 'extrinsics', None)
                     self.sensors.append(sensor)
                 except Exception as e:
                     print(f'Failed to init {sensor_type} ({conn}): {e}')
         else:
-            # Fallback to config
+            # Fallback to YAML config
             if self.config_file and os.path.exists(self.config_file):
                 with open(self.config_file) as f:
                     cfg = yaml.safe_load(f)
@@ -93,6 +100,10 @@ class SensorManager:
                             sensor = RadarSensor(entry.get('port'), entry.get('baudrate', 115200))
                         else:
                             continue
+                        # Attach calibration and extrinsics if provided
+                        sensor.calibration_file = entry.get('calibration_file')
+                        sensor.parent_frame = entry.get('parent_frame')
+                        sensor.extrinsics = entry.get('extrinsics')
                         self.sensors.append(sensor)
                     except Exception as e:
                         print(f'Failed to init from config: {e}')
@@ -100,4 +111,13 @@ class SensorManager:
                 raise RuntimeError('No sensors detected and no valid config provided')
 
     def get_sensors(self):
+        return self.sensors
+    def refresh(self):
+        """
+        Re-detect sensors and update the internal list.
+
+        Returns:
+            list: current list of sensor instances
+        """
+        self._detect_sensors()
         return self.sensors

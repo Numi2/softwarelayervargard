@@ -25,3 +25,9 @@ class IPCamera(BaseSensor):
             'timestamp': time.time()
         }
         return frame, metadata
+    def close(self):
+        """
+        Release the IP camera video capture.
+        """
+        if hasattr(self, 'cap') and self.cap is not None:
+            self.cap.release()

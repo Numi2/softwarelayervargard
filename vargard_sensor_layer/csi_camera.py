@@ -29,3 +29,9 @@ class CsiCamera(BaseSensor):
             'timestamp': time.time()
         }
         return frame, metadata
+    def close(self):
+        """
+        Release the GStreamer video capture.
+        """
+        if hasattr(self, 'cap') and self.cap is not None:
+            self.cap.release()

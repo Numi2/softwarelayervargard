@@ -21,3 +21,8 @@ class BaseSensor(ABC):
                 metadata: dict with keys 'sensor_id', 'sensor_type', 'timestamp'
         """
         pass
+    def close(self):
+        """
+        Clean up any resources held by the sensor (e.g., close handles).
+        """
+        pass

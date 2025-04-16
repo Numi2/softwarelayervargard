@@ -21,3 +21,12 @@ class RadarSensor(BaseSensor):
             'timestamp': time.time()
         }
         return raw, metadata
+    def close(self):
+        """
+        Close the serial port for the radar sensor.
+        """
+        if hasattr(self, 'ser') and self.ser is not None:
+            try:
+                self.ser.close()
+            except Exception:
+                pass
