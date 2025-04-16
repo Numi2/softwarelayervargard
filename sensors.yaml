@@ -1,0 +1,16 @@
+
+sensors:
+  - type: usb_camera
+    device_index: 0
+  - type: csi_camera
+    params:
+      width: 1920
+      height: 1080
+      framerate: 30
+  - type: flir_thermal
+    device_path: /dev/video1
+  - type: ip_camera
+    rtsp_url: rtsp://192.168.1.10/stream
+  - type: radar
+    port: /dev/ttyUSB0
+    baudrate: 115200
