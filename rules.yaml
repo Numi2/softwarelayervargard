@@ -1,0 +1,19 @@
+rules:
+  - name: person_detected
+    plugin: yolov5
+    condition:
+      class: person
+      confidence_gt: 0.5
+    action:
+      type: webhook
+      url: http://localhost:8000/alert
+      message: "Person detected by {plugin} on {sensor_id}"
+  # Example thermal anomaly rule
+  - name: thermal_anomaly
+    plugin: thermal
+    condition:
+      value_gt: 50.0
+    action:
+      type: webhook
+      url: http://localhost:8000/alert
+      message: "Thermal anomaly detected: {value}"

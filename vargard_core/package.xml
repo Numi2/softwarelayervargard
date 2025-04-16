@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>vargard_core</name>
+  <version>0.1.0</version>
+  <description>Core inference & event management for Vargard AI Brain</description>
+  <maintainer email="maintainer@example.com">Vargard Team</maintainer>
+  <license>Apache-2.0</license>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+  <buildtool_depend>rosidl_default_generators</buildtool_depend>
+  <buildtool_depend>ament_cmake_python</buildtool_depend>
+  <depend>rclpy</depend>
+  <depend>rosidl_default_runtime</depend>
+  <depend>sensor_msgs</depend>
+  <depend>std_msgs</depend>
+  <depend>cv_bridge</depend>
+  <exec_depend>torch</exec_depend>
+  <exec_depend>pytest</exec_depend>
+  <exec_depend>pyyaml</exec_depend>
+  <exec_depend>requests</exec_depend>
+</package>
