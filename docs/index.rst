@@ -8,6 +8,7 @@ Welcome to Vargard's documentation!
    :maxdepth: 2
 
    tutorial
+   tutorial2
    cli
 
 Module Reference
