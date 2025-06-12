@@ -45,19 +45,39 @@ class InferenceNode(Node):
         # Data storage
         self.bridge = CvBridge()
         self.camera_info = {}
-        # Subscriptions to existing topics
-        topics = self.get_topic_names_and_types()
-        for topic, types in topics:
-            if 'sensor_msgs/msg/CameraInfo' in types:
-                self.create_subscription(CameraInfo, topic, self._info_cb, 10)
-            if 'sensor_msgs/msg/Image' in types:
-                self.create_subscription(Image, topic, self._image_cb, 10)
+        # Subscriptions to sensor topics discovered at runtime
+        self.subscriptions = {}
+        self._scan_topics()  # subscribe to existing topics at startup
+        # periodic scan for newly created/removed topics
+        self.create_timer(5.0, self._scan_topics)
         # Publishers for plugin outputs
         self.publishers = {}
         for name in self.plugins:
             qos = QoSProfile(depth=10, reliability=QoSReliabilityPolicy.BEST_EFFORT)
             topic = f'/vargard/events/{name}'
             self.publishers[name] = self.create_publisher(String, topic, qos)
+
+    def _scan_topics(self):
+        """Subscribe/unsubscribe to sensor topics dynamically."""
+        current_topics = {t for t, _ in self.get_topic_names_and_types()}
+        # Subscribe to new topics
+        for topic, types in self.get_topic_names_and_types():
+            if topic not in self.subscriptions:
+                subs = []
+                if 'sensor_msgs/msg/CameraInfo' in types:
+                    subs.append(self.create_subscription(CameraInfo, topic, self._info_cb, 10))
+                if 'sensor_msgs/msg/Image' in types:
+                    subs.append(self.create_subscription(Image, topic, self._image_cb, 10))
+                if subs:
+                    self.subscriptions[topic] = subs
+        # Remove subscriptions for disappeared topics
+        for topic in list(self.subscriptions.keys()):
+            if topic not in current_topics:
+                for sub in self.subscriptions.pop(topic):
+                    try:
+                        self.destroy_subscription(sub)
+                    except Exception:
+                        pass
 
     def _info_cb(self, msg: CameraInfo):
         # cache latest camera_info by frame_id

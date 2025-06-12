@@ -10,6 +10,7 @@ Welcome to Vargard's documentation!
    tutorial
    tutorial2
    cli
+   writing_plugins
 
 Module Reference
 ================

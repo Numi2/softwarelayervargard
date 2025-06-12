@@ -36,9 +36,10 @@ setup(
             'telemetry_node = vargard_core.telemetry_node:main',
             'vargardctl = vargard_core.cli:cli',
         ],
-        # Register new YOLOv8 inference plugin
+        # Register available inference plugins
         'vargard.inference_plugins': [
-            'yolov8 = vargard_core.plugins.yolov8:YOLOv8Plugin'
+            'yolov8 = vargard_core.plugins.yolov8:YOLOv8Plugin',
+            'yolov5 = vargard_core.plugins.yolov5:YOLOv5Plugin'
         ],
     },
 )

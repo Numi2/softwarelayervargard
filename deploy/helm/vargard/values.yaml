@@ -8,3 +8,17 @@ image:
   event:
     repository: vargard/event
     tag: latest
+
+resources:
+  sensor: {}
+  inference: {}
+  event: {}
+
+mqtt:
+  broker: mqtt.example.com
+  port: 8883
+
+ros:
+  security:
+    enabled: false
+    enclave: ""

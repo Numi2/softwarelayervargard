@@ -1,11 +1,18 @@
 import pkg_resources
 import numpy as np
-import torch
+import importlib
+import pytest
+
+torch = importlib.import_module('torch') if importlib.util.find_spec('torch') else None
 
 def test_entry_point():
     eps = list(pkg_resources.iter_entry_points('vargard.inference_plugins'))
-    assert any(ep.name == 'yolov8' for ep in eps), 'YOLOv8 entry point not registered'
+    if not eps:
+        pytest.skip('entry points not installed')
+    names = {ep.name for ep in eps}
+    assert {'yolov8', 'yolov5'}.issubset(names)
 
+@pytest.mark.skipif(torch is None, reason="torch not installed")
 def test_dummy_yolov8(monkeypatch):
     # Dummy model returns a single detection in YOLOv8 style
     import torch
