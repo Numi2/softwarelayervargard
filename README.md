@@ -194,6 +194,8 @@ The `vargardctl` command provides easy orchestration of the Vargard stack:
 
 - `vargardctl list-sensors` - Show sensors from sensors.yaml or auto-detected.
 - `vargardctl list-plugins` - List registered inference plugins.
+  By default the system ships with `yolov8` and `yolov5` plugins which are
+  registered via Python entry points.
 - `vargardctl start` - Start the stack using Docker Compose.
 - `vargardctl stop` - Stop the stack.
 - `vargardctl logs` - Stream container logs.

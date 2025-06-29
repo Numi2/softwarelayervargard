@@ -39,16 +39,27 @@ class EventManager(Node):
         else:
             self.get_logger().warn('No valid rules_file provided; no rules active')
 
-        # Subscriptions: dynamic on /vargard/events/*
+        # Subscriptions: dynamically monitor /vargard/events/* topics
         self.subscriptions = {}
-        topics = self.get_topic_names_and_types()
-        for topic, types in topics:
-            if topic.startswith('/vargard/events/') and topic not in self.subscriptions:
-                self.subscriptions[topic] = self.create_subscription(
-                    String, topic, self._event_cb, 10)
+        self._scan_event_topics()
+        self.create_timer(5.0, self._scan_event_topics)
 
         # Publisher for alerts
         self.alert_pub = self.create_publisher(Alert, '/vargard/alerts', 10)
+
+    def _scan_event_topics(self):
+        """Subscribe or unsubscribe based on available /vargard/events/* topics."""
+        topics = dict(self.get_topic_names_and_types())
+        for topic, types in topics.items():
+            if topic.startswith('/vargard/events/') and topic not in self.subscriptions:
+                self.subscriptions[topic] = self.create_subscription(String, topic, self._event_cb, 10)
+        current = set(topics.keys())
+        for topic in list(self.subscriptions.keys()):
+            if topic not in current:
+                try:
+                    self.destroy_subscription(self.subscriptions.pop(topic))
+                except Exception:
+                    pass
 
     def _diag_status(self, stat):
         """Basic diagnostic task for node heartbeat."""

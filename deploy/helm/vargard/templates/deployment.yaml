@@ -16,7 +16,10 @@ spec:
       containers:
         - name: sensor
           image: "{{ .Values.image.sensor.repository }}:{{ .Values.image.sensor.tag }}"
+          resources: {{ toYaml .Values.resources.sensor | nindent 12 }}
         - name: inference
           image: "{{ .Values.image.inference.repository }}:{{ .Values.image.inference.tag }}"
+          resources: {{ toYaml .Values.resources.inference | nindent 12 }}
         - name: event
           image: "{{ .Values.image.event.repository }}:{{ .Values.image.event.tag }}"
+          resources: {{ toYaml .Values.resources.event | nindent 12 }}
