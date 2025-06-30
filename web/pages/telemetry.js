@@ -78,10 +78,13 @@ export default function Telemetry() {
 
   const filteredData = getFilteredData();
 
-  const formatDataForChart = (key) => {
+  const formatDataForChart = () => {
     return filteredData.map(d => ({
       time: format(d.timestamp, 'HH:mm'),
-      value: d[key] || 0,
+      cpu_percent: d.cpu_percent || 0,
+      memory_percent: d.memory_percent || 0,
+      network_bytes_sent: d.network_bytes_sent || 0,
+      network_bytes_recv: d.network_bytes_recv || 0,
     }));
   };
 
@@ -193,23 +196,21 @@ export default function Telemetry() {
             <Heading size="md" mb={4}>CPU & Memory Usage</Heading>
             <Box height="300px">
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart>
+                <LineChart data={formatDataForChart()}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="time" />
                   <YAxis domain={[0, 100]} />
                   <Tooltip formatter={(value) => [`${value}%`, '']} />
                   <Line 
-                    data={formatDataForChart('cpu_percent')}
                     type="monotone" 
-                    dataKey="value" 
+                    dataKey="cpu_percent" 
                     stroke="#1e88e5" 
                     strokeWidth={2}
                     name="CPU"
                   />
                   <Line 
-                    data={formatDataForChart('memory_percent')}
                     type="monotone" 
-                    dataKey="value" 
+                    dataKey="memory_percent" 
                     stroke="#43a047" 
                     strokeWidth={2}
                     name="Memory"
@@ -224,23 +225,21 @@ export default function Telemetry() {
             <Heading size="md" mb={4}>Network Activity</Heading>
             <Box height="300px">
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart>
+                <LineChart data={formatDataForChart()}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="time" />
                   <YAxis />
                   <Tooltip formatter={(value) => [`${(value / 1024).toFixed(2)} KB/s`, '']} />
                   <Line 
-                    data={formatDataForChart('network_bytes_sent')}
                     type="monotone" 
-                    dataKey="value" 
+                    dataKey="network_bytes_sent" 
                     stroke="#ff6b6b" 
                     strokeWidth={2}
                     name="Sent"
                   />
                   <Line 
-                    data={formatDataForChart('network_bytes_recv')}
                     type="monotone" 
-                    dataKey="value" 
+                    dataKey="network_bytes_recv" 
                     stroke="#4ecdc4" 
                     strokeWidth={2}
                     name="Received"
