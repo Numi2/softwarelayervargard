@@ -7,10 +7,14 @@ setup(
     version='0.1.0',
     packages=[package_name],
     data_files=[
-        ('share/ament_index/resource_index/packages', ['resource/' + package_name]),
+        (
+            'share/ament_index/resource_index/packages',
+            ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
         ('share/' + package_name + '/msg', ['msg/Alert.msg']),
-        ('share/' + package_name + '/launch', ['launch/demo_inference.launch.py']),
+        (
+            'share/' + package_name + '/launch',
+            ['launch/demo_inference.launch.py']),
     ],
     install_requires=[
         'setuptools',

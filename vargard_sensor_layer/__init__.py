@@ -15,7 +15,7 @@ __all__ = [
     "sensor_manager",
     "base_sensor",
     "usb_camera",
-    "csi_camera", 
+    "csi_camera",
     "flir_sensor",
     "ip_camera",
     "radar_sensor",

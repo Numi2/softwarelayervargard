@@ -7,8 +7,14 @@ import cv2
 import time
 from .base_sensor import BaseSensor
 
+
 class CsiCamera(BaseSensor):
-    def __init__(self, width=1920, height=1080, framerate=30, sensor_id: str = 'csi_camera_0'):
+    def __init__(
+        self,
+        width=1920,
+        height=1080,
+        framerate=30,
+        sensor_id: str = 'csi_camera_0'):
         super().__init__(sensor_id, 'csi_camera')
         gst_str = (
             f'nvarguscamerasrc ! video/x-raw(memory:NVMM), width={width}, height={height}, '
@@ -29,6 +35,7 @@ class CsiCamera(BaseSensor):
             'timestamp': time.time()
         }
         return frame, metadata
+
     def close(self):
         """
         Release the GStreamer video capture.

@@ -1,6 +1,11 @@
 """
 ROS2 node for edge-to-cloud telemetry and OTA updates via MQTT.
-Collects system metrics (CPU, memory, temp, network, GPU) and publishes to MQTT.
+Collects system metrics (
+    CPU,
+    memory,
+    temp,
+    network,
+    GPU) and publishes to MQTT.
 Subscribes to a config topic for OTA and remote config pushes.
 """
 import json
@@ -10,6 +15,7 @@ import rclpy
 from rclpy.node import Node
 import psutil
 import paho.mqtt.client as mqtt
+
 
 class TelemetryNode(Node):
     def __init__(self):
@@ -54,7 +60,8 @@ class TelemetryNode(Node):
         self.create_timer(self.interval, self.publish_telemetry)
 
     def on_connect(self, client, userdata, flags, rc):
-        self.get_logger().info(f"Connected to MQTT broker {self.broker}:{self.port} (rc={rc})")
+        self.get_logger(
+            ).info(f"Connected to MQTT broker {self.broker}:{self.port} (rc={rc})")
 
     def on_message(self, client, userdata, msg):
         try:
@@ -118,9 +125,11 @@ class TelemetryNode(Node):
         # Publish
         try:
             self.client.publish(self.telemetry_topic, json.dumps(payload))
-            self.get_logger().debug(f"Published telemetry to {self.telemetry_topic}")
+            self.get_logger(
+                ).debug(f"Published telemetry to {self.telemetry_topic}")
         except Exception as e:
             self.get_logger().error(f"Failed to publish telemetry: {e}")
+
 
 def main(args=None):
     rclpy.init(args=args)

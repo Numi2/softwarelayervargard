@@ -11,7 +11,7 @@ __email__ = "maintainer@example.com"
 
 __all__ = [
     "inference_node",
-    "event_manager", 
+    "event_manager",
     "telemetry_node",
     "cli",
 ]

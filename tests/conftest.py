@@ -13,13 +13,11 @@ from typing import Dict, Any
 from unittest.mock import Mock
 import numpy as np
 
-
 @pytest.fixture
 def temp_dir():
     """Create a temporary directory for test files."""
     with tempfile.TemporaryDirectory() as tmp_dir:
         yield Path(tmp_dir)
-
 
 @pytest.fixture
 def sample_sensor_config():
@@ -33,14 +31,13 @@ def sample_sensor_config():
                 "enabled": True
             },
             {
-                "id": "test_camera_1", 
+                "id": "test_camera_1",
                 "type": "csi_camera",
                 "device_path": "/dev/video1",
                 "enabled": False
             }
         ]
     }
-
 
 @pytest.fixture
 def sample_rules_config():
@@ -65,7 +62,7 @@ def sample_rules_config():
             {
                 "id": "vehicle_detection",
                 "name": "Vehicle Detection",
-                "plugin": "yolov8", 
+                "plugin": "yolov8",
                 "enabled": False,
                 "conditions": {
                     "class": "vehicle",
@@ -79,7 +76,6 @@ def sample_rules_config():
             }
         ]
     }
-
 
 @pytest.fixture
 def sample_detection():
@@ -95,7 +91,6 @@ def sample_detection():
         }
     }
 
-
 @pytest.fixture
 def sample_detections(sample_detection):
     """List of sample detections for testing."""
@@ -104,7 +99,7 @@ def sample_detections(sample_detection):
         {
             "bbox": [300, 100, 450, 250],
             "confidence": 0.92,
-            "class": "vehicle", 
+            "class": "vehicle",
             "class_id": 1,
             "metadata": {
                 "model": "yolov8n",
@@ -113,12 +108,10 @@ def sample_detections(sample_detection):
         }
     ]
 
-
 @pytest.fixture
 def mock_image():
     """Mock image data for testing."""
     return np.zeros((480, 640, 3), dtype=np.uint8)
-
 
 @pytest.fixture
 def mock_sensor():
@@ -127,7 +120,13 @@ def mock_sensor():
     sensor.sensor_id = "test_sensor"
     sensor.sensor_type = "usb_camera"
     sensor.is_connected.return_value = True
-    sensor.get_frame.return_value = (True, np.zeros((480, 640, 3), dtype=np.uint8))
+    sensor.get_frame.return_value = (
+        True,
+        np.zeros((480,
+        640,
+        3),
+        dtype=np.uint8)
+    )
     sensor.get_status.return_value = {
         "status": "healthy",
         "fps": 30.0,
@@ -135,7 +134,6 @@ def mock_sensor():
         "error_count": 0
     }
     return sensor
-
 
 @pytest.fixture
 def mock_plugin():
@@ -153,8 +151,7 @@ def mock_plugin():
     }
     return plugin
 
-
-@pytest.fixture  
+@pytest.fixture
 def config_file(temp_dir, sample_sensor_config):
     """Create a temporary config file for testing."""
     config_path = temp_dir / "test_config.yaml"
@@ -175,11 +172,13 @@ def assert_detection_valid(detection: Dict[str, Any]) -> None:
     required_fields = ["bbox", "confidence", "class", "class_id"]
     for field in required_fields:
         assert field in detection, f"Detection missing required field: {field}"
-    
+
     assert len(detection["bbox"]) == 4, "Bbox should have 4 coordinates"
     assert 0.0 <= detection["confidence"] <= 1.0, "Confidence should be between 0 and 1"
     assert isinstance(detection["class"], str), "Class should be a string"
-    assert isinstance(detection["class_id"], int), "Class ID should be an integer"
+    assert isinstance(
+        detection["class_id"],
+        int), "Class ID should be an integer"
 
 
 def assert_rule_valid(rule: Dict[str, Any]) -> None:
@@ -187,7 +186,7 @@ def assert_rule_valid(rule: Dict[str, Any]) -> None:
     required_fields = ["id", "name", "plugin", "conditions", "actions"]
     for field in required_fields:
         assert field in rule, f"Rule missing required field: {field}"
-    
+
     assert isinstance(rule["enabled"], bool), "Enabled should be boolean"
     assert "class" in rule["conditions"], "Rule conditions should specify class"
     assert "type" in rule["actions"], "Rule actions should specify type"
@@ -195,34 +194,33 @@ def assert_rule_valid(rule: Dict[str, Any]) -> None:
 
 class MockROS2Node:
     """Mock ROS2 node for testing without ROS2 dependencies."""
-    
+
     def __init__(self, node_name: str):
         self.node_name = node_name
         self.logger = Mock()
         self.timers = []
         self.publishers = {}
         self.subscribers = {}
-        
+
     def create_timer(self, timer_period, callback):
         timer = Mock()
         timer.timer_period = timer_period
         timer.callback = callback
         self.timers.append(timer)
         return timer
-        
+
     def create_publisher(self, msg_type, topic, qos_profile):
         publisher = Mock()
         self.publishers[topic] = publisher
         return publisher
-        
+
     def create_subscription(self, msg_type, topic, callback, qos_profile):
         subscription = Mock()
         self.subscribers[topic] = subscription
         return subscription
-        
+
     def get_logger(self):
         return self.logger
-
 
 @pytest.fixture
 def mock_ros_node():

@@ -7,6 +7,7 @@ import time
 import serial
 from .base_sensor import BaseSensor
 
+
 class RadarSensor(BaseSensor):
     def __init__(self, port: str, baudrate: int = 115200):
         sensor_id = f'radar_{port.split('/')[-1]}'
@@ -21,6 +22,7 @@ class RadarSensor(BaseSensor):
             'timestamp': time.time()
         }
         return raw, metadata
+
     def close(self):
         """
         Close the serial port for the radar sensor.

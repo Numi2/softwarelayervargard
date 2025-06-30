@@ -17,6 +17,7 @@ from geometry_msgs.msg import TransformStamped
 from builtin_interfaces.msg import Time as ROS2Time
 from .sensor_manager import SensorManager
 
+
 class SensorNode(Node):
     def __init__(self):
         super().__init__('sensor_layer_node')
@@ -51,8 +52,13 @@ class SensorNode(Node):
         # Diagnostic array publisher
         if self.enable_diagnostics:
             self.last_data_time = {}
-            qos_diag = QoSProfile(depth=10, reliability=QoSReliabilityPolicy.RELIABLE)
-            self.diag_pub = self.create_publisher(DiagnosticArray, '/diagnostics', qos_profile=qos_diag)
+            qos_diag = QoSProfile(
+                depth=10,
+                reliability=QoSReliabilityPolicy.RELIABLE)
+            self.diag_pub = self.create_publisher(
+                DiagnosticArray,
+                '/diagnostics',
+                qos_profile=qos_diag)
         # Timer for updater
         self.create_timer(1.0, self.updater.update)
         # Initial sensor setup
@@ -60,7 +66,9 @@ class SensorNode(Node):
             self._add_sensor(sensor)
         # Timers
         self.timer = self.create_timer(1.0 / 30.0, self.timer_callback)
-        self.hotplug_timer = self.create_timer(hotplug_interval, self.hotplug_callback)
+        self.hotplug_timer = self.create_timer(
+            hotplug_interval,
+            self.hotplug_callback)
         if self.enable_diagnostics:
             self.diag_timer = self.create_timer(1.0, self._publish_diagnostics)
 
@@ -77,7 +85,9 @@ class SensorNode(Node):
                         t = meta['timestamp']
                         sec = int(t)
                         nanosec = int((t - sec) * 1e9)
-                        img_msg.header.stamp = ROS2Time(sec=sec, nanosec=nanosec)
+                        img_msg.header.stamp = ROS2Time(
+                            sec=sec,
+                            nanosec=nanosec)
                     else:
                         img_msg.header.stamp = self.get_clock().now().to_msg()
                     img_msg.header.frame_id = sid
@@ -92,7 +102,9 @@ class SensorNode(Node):
                         extr = self.extrinsics[sid]
                         tf_msg = TransformStamped()
                         tf_msg.header.stamp = img_msg.header.stamp
-                        tf_msg.header.frame_id = extr.get('parent_frame', '') or ''
+                        tf_msg.header.frame_id = extr.get(
+                            'parent_frame',
+                            '') or ''
                         tf_msg.child_frame_id = sid
                         tvec = extr.get('translation', [0.0, 0.0, 0.0])
                         rquat = extr.get('rotation', [0.0, 0.0, 0.0, 1.0])
@@ -107,19 +119,29 @@ class SensorNode(Node):
                 # Radar sensor
                 elif sensor.sensor_type == 'radar':
                     msg = String()
-                    msg.data = data.decode('utf-8', errors='ignore') if isinstance(data, (bytes, bytearray)) else str(data)
+                    msg.data = data.decode(
+                        'utf-8',
+                        errors='ignore') if isinstance(data,
+                        (bytes,
+                        bytearray)) else str(data)
                     self.publishers[sid]['radar'].publish(msg)
                 # Update diagnostics timestamp
                 if self.enable_diagnostics:
                     self.last_data_time[sid] = time.time()
-                    
+
             except Exception as e:
                 self.get_logger().warn(f'Error reading sensor {sid}: {e}')
                 # Check if sensor needs reconnection
-                if hasattr(sensor, 'status') and sensor.status.value == 'failed':
-                    self.get_logger().info(f'Attempting to reconnect sensor {sid}')
-                    if hasattr(sensor, 'attempt_reconnect') and sensor.attempt_reconnect():
-                        self.get_logger().info(f'Successfully reconnected sensor {sid}')
+                if hasattr(
+                    sensor,
+                    'status') and sensor.status.value == 'failed':
+                    self.get_logger(
+                        ).info(f'Attempting to reconnect sensor {sid}')
+                    if hasattr(
+                        sensor,
+                        'attempt_reconnect') and sensor.attempt_reconnect():
+                        self.get_logger(
+                            ).info(f'Successfully reconnected sensor {sid}')
                     else:
                         self.get_logger().warn(f'Failed to reconnect sensor {sid}')
 
@@ -128,10 +150,16 @@ class SensorNode(Node):
         if sensor.sensor_type in ['usb_camera', 'csi_camera', 'ip_camera', 'flir_thermal']:
             # Best effort for image; reliable for camera_info
             if info:
-                return QoSProfile(depth=5, reliability=QoSReliabilityPolicy.RELIABLE)
-            return QoSProfile(depth=5, reliability=QoSReliabilityPolicy.BEST_EFFORT)
+                return QoSProfile(
+                    depth=5,
+                    reliability=QoSReliabilityPolicy.RELIABLE)
+            return QoSProfile(
+                depth=5,
+                reliability=QoSReliabilityPolicy.BEST_EFFORT)
         elif sensor.sensor_type == 'radar':
-            return QoSProfile(depth=10, reliability=QoSReliabilityPolicy.RELIABLE)
+            return QoSProfile(
+                depth=10,
+                reliability=QoSReliabilityPolicy.RELIABLE)
         return QoSProfile(depth=5, reliability=QoSReliabilityPolicy.RELIABLE)
 
     def _add_sensor(self, sensor):
@@ -143,14 +171,19 @@ class SensorNode(Node):
             qos_img = self._get_qos(sensor, info=False)
             qos_info = self._get_qos(sensor, info=True)
             img_pub = self.create_publisher(Image, topic, qos_profile=qos_img)
-            info_pub = self.create_publisher(CameraInfo, topic + '/camera_info', qos_profile=qos_info)
+            info_pub = self.create_publisher(
+                CameraInfo,
+                topic + '/camera_info',
+                qos_profile=qos_info)
             self.publishers[sid] = {'image': img_pub, 'info': info_pub}
             # Calibration loader
             calib_url = ''
             cf = getattr(sensor, 'calibration_file', None)
             if cf:
                 if not cf.startswith('file://'):
-                    path = cf if os.path.isabs(cf) else os.path.join(self.calibration_folder, cf)
+                    path = cf if os.path.isabs(
+                        cf) else os.path.join(self.calibration_folder,
+                        cf)
                     calib_url = 'file://' + path
                 else:
                     calib_url = cf
@@ -208,7 +241,9 @@ class SensorNode(Node):
         added = new_ids - old_ids
         removed = old_ids - new_ids
         if added or removed:
-            self.get_logger().info(f'Sensors changed. Added: {added}, Removed: {removed}')
+            self.get_logger(
+                ).info(f'Sensors changed. Added: {added},
+                Removed: {removed}')
             for sid in removed:
                 self._remove_sensor(sid)
             for sensor in new_list:
@@ -220,19 +255,19 @@ class SensorNode(Node):
         now = time.time()
         diag_arr = DiagnosticArray()
         diag_arr.header.stamp = self.get_clock().now().to_msg()
-        
+
         for sid, sensor in self.sensor_objects.items():
             ds = DiagnosticStatus()
             ds.name = f'sensor_layer/{sid}'
             ds.hardware_id = sid
-            
+
             # Get sensor health info if available
             if hasattr(sensor, 'get_health_info'):
                 health_info = sensor.get_health_info()
                 status = health_info.get('status', 'unknown')
                 error_count = health_info.get('error_count', 0)
                 total_frames = health_info.get('total_frames', 0)
-                
+
                 # Set diagnostic level based on sensor status
                 if status == 'healthy':
                     ds.level = DiagnosticStatus.OK
@@ -246,7 +281,7 @@ class SensorNode(Node):
                 else:
                     ds.level = DiagnosticStatus.STALE
                     ds.message = f'Unknown status: {status}'
-                    
+
                 # Add detailed health info as key-value pairs
                 from diagnostic_msgs.msg import KeyValue
                 for key, value in health_info.items():
@@ -261,15 +296,17 @@ class SensorNode(Node):
                 else:
                     ds.level = DiagnosticStatus.OK
                     ds.message = 'OK'
-                    
+
             diag_arr.status.append(ds)
         self.diag_pub.publish(diag_arr)
+
     def _diag_status(self, stat):
         """
         Basic diagnostic task for node heartbeat.
         """
         stat.summary(0, 'Node running')
         return stat
+
 
 def main(args=None):
     rclpy.init(args=args)

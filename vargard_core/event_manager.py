@@ -13,6 +13,7 @@ from rclpy.qos import QoSProfile, QoSReliabilityPolicy
 from diagnostic_updater import Updater
 from diagnostic_msgs.msg import DiagnosticArray, DiagnosticStatus, KeyValue
 
+
 class EventManager(Node):
     def __init__(self):
         super().__init__('event_manager')
@@ -23,8 +24,13 @@ class EventManager(Node):
         self.updater.setHardwareID(self.get_name())
         self.updater.add('Node Status', self._diag_status)
         if self.enable_diagnostics:
-            qos_diag = QoSProfile(depth=10, reliability=QoSReliabilityPolicy.RELIABLE)
-            self.diag_pub = self.create_publisher(DiagnosticArray, '/diagnostics', qos_profile=qos_diag)
+            qos_diag = QoSProfile(
+                depth=10,
+                reliability=QoSReliabilityPolicy.RELIABLE)
+            self.diag_pub = self.create_publisher(
+                DiagnosticArray,
+                '/diagnostics',
+                qos_profile=qos_diag)
         self.create_timer(1.0, self.updater.update)
         # Parameters
         self.declare_parameter('rules_file', '')
@@ -32,17 +38,19 @@ class EventManager(Node):
         # Initialize enhanced rule engine
         from .rule_engine import RuleEngine
         self.rule_engine = RuleEngine()
-        
+
         # Load rules
         if rules_file and os.path.exists(rules_file):
             with open(rules_file, 'r') as f:
                 cfg = yaml.safe_load(f)
             rules_config = cfg.get('rules', []) or []
-            
+
             if self.rule_engine.load_rules(rules_config):
-                self.get_logger().info(f'Successfully loaded {len(rules_config)} rules from {rules_file}')
+                self.get_logger(
+                    ).info(f'Successfully loaded {len(rules_config)} rules from {rules_file}')
             else:
-                self.get_logger().error('Failed to load some rules - check configuration')
+                self.get_logger(
+                    ).error('Failed to load some rules - check configuration')
         else:
             self.get_logger().warn('No valid rules_file provided; no rules active')
 
@@ -59,7 +67,11 @@ class EventManager(Node):
         topics = dict(self.get_topic_names_and_types())
         for topic, types in topics.items():
             if topic.startswith('/vargard/events/') and topic not in self.subscriptions:
-                self.subscriptions[topic] = self.create_subscription(String, topic, self._event_cb, 10)
+                self.subscriptions[topic] = self.create_subscription(
+                    String,
+                    topic,
+                    self._event_cb,
+                    10)
         current = set(topics.keys())
         for topic in list(self.subscriptions.keys()):
             if topic not in current:
@@ -73,21 +85,35 @@ class EventManager(Node):
         # Add rule engine statistics
         if hasattr(self, 'rule_engine'):
             rule_stats = self.rule_engine.get_rule_stats()
-            total_triggers = sum(stats.get('triggered_count', 0) for stats in rule_stats.values())
-            total_errors = sum(stats.get('error_count', 0) for stats in rule_stats.values())
-            
-            stat.summary(DiagnosticStatus.OK, f'Running - {len(rule_stats)} rules, {total_triggers} triggers, {total_errors} errors')
-            
+            total_triggers = sum(
+                stats.get('triggered_count',
+                0) for stats in rule_stats.values())
+            total_errors = sum(
+                stats.get('error_count',
+                0) for stats in rule_stats.values())
+
+            stat.summary(
+                DiagnosticStatus.OK,
+                f'Running - {len(rule_stats)} rules,
+                {total_triggers} triggers,
+                {total_errors} errors')
+
             # Add detailed rule statistics
             from diagnostic_msgs.msg import KeyValue
-            stat.values.append(KeyValue(key='active_rules', value=str(len(rule_stats))))
-            stat.values.append(KeyValue(key='total_triggers', value=str(total_triggers)))
-            stat.values.append(KeyValue(key='total_errors', value=str(total_errors)))
+            stat.values.append(
+                KeyValue(key='active_rules',
+                value=str(len(rule_stats))))
+            stat.values.append(
+                KeyValue(key='total_triggers',
+                value=str(total_triggers)))
+            stat.values.append(
+                KeyValue(key='total_errors',
+                value=str(total_errors)))
         else:
             stat.summary(DiagnosticStatus.OK, 'Node running')
-            
+
         return stat
-    
+
     def get_rule_statistics(self):
         """Get detailed rule statistics for monitoring."""
         if hasattr(self, 'rule_engine'):
@@ -100,22 +126,25 @@ class EventManager(Node):
         except Exception as e:
             self.get_logger().error(f'Failed to parse event JSON: {e}')
             return
-            
+
         # Use enhanced rule engine to evaluate events
         triggered_actions = self.rule_engine.evaluate_event(payload)
-        
+
         # Process triggered actions
         for action_data in triggered_actions:
             rule = action_data['rule']
             event_data = action_data['event_data']
-            
+
             # Find the best detection for this rule (highest confidence)
             detections = event_data.get('detections', [])
             best_detection = None
-            
+
             if detections:
                 # Sort by confidence and take the best one
-                best_detection = max(detections, key=lambda d: d.get('confidence', 0))
+                best_detection = max(
+                    detections,
+                    key=lambda d: d.get('confidence',
+                    0))
             else:
                 # Create a dummy detection for event-level rules
                 best_detection = {
@@ -123,11 +152,20 @@ class EventManager(Node):
                     'confidence': 1.0,
                     'bbox': [0, 0, 0, 0]
                 }
-            
-            # Trigger alert with enhanced context
-            self._trigger_alert(rule, event_data, best_detection, action_data['timestamp'])
 
-    def _trigger_alert(self, rule: dict, payload: dict, detection: dict, trigger_time: float = None):
+            # Trigger alert with enhanced context
+            self._trigger_alert(
+                rule,
+                event_data,
+                best_detection,
+                action_data['timestamp'])
+
+    def _trigger_alert(
+        self,
+        rule: dict,
+        payload: dict,
+        detection: dict,
+        trigger_time: float = None):
         # Prepare Alert message
         alert = Alert()
         alert.plugin = payload.get('plugin', '')
@@ -173,6 +211,7 @@ class EventManager(Node):
                 send_slack(url, alert.description)
             except Exception as e:
                 self.get_logger().warn(f'Slack alert failed: {e}')
+
 
 def main(args=None):
     rclpy.init(args=args)

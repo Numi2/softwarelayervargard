@@ -50,6 +50,7 @@ except ImportError:  # pragma: no cover – fallback when *click* is missing
     # dependency.
 
     def _decorator_stub(*_args, **_kwargs):  # noqa: D401
+
         def _inner(func):
             return func
 
@@ -71,7 +72,6 @@ import yaml
 # Lazily import sensor manager & pkg_resources because these drag in heavier
 # dependencies.  Importing them inside the functions instead of at module load
 # time makes the CLI start‑up feel instant.
-
 
 # ---------------------------------------------------------------------------
 # Helper functions
@@ -96,7 +96,9 @@ def _load_sensors_from_yaml(config_path: Path) -> List[dict]:
             data = yaml.safe_load(f) or {}
         return list(data.get("sensors", []))
     except (OSError, yaml.YAMLError) as exc:
-        click.echo(f"Error reading sensor config {config_path}: {exc}", err=True)
+        click.echo(
+            f"Error reading sensor config {config_path}: {exc}",
+            err=True)
         return []
 
 
@@ -141,25 +143,23 @@ def _docker_compose_cmd(*compose_args: str, cwd: Path | None = None) -> int:
     try:
         return subprocess.call(cmd, cwd=cwd)
     except FileNotFoundError:
-        click.echo("Error: 'docker' executable not found. Is Docker installed?", err=True)
+        click.echo(
+            "Error: 'docker' executable not found. Is Docker installed?",
+            err=True)
         return 1
-
 
 # ---------------------------------------------------------------------------
 # Click CLI definition
 # ---------------------------------------------------------------------------
-
 
 @click.group()
 @click.version_option(package_name="vargard_core", prog_name="vargardctl")
 def cli():  # noqa: D401  (Click commands don't need docstrings)
     """Management CLI for Vargard deployments."""
 
-
 # ---------------------------------------------------------------------------
 # list‑sensors
 # ---------------------------------------------------------------------------
-
 
 @cli.command("list-sensors")
 @click.option(
@@ -169,6 +169,8 @@ def cli():  # noqa: D401  (Click commands don't need docstrings)
     type=click.Path(exists=False, dir_okay=False, path_type=Path),
     help="YAML configuration file to read (defaults to ./sensors.yaml).",
 )
+
+
 def list_sensors(config_path: Path):
     """Print sensors declared in *sensors.yaml* or auto‑detected."""
 
@@ -203,11 +205,9 @@ def list_sensors(config_path: Path):
     else:
         click.echo("No sensors found.")
 
-
 # ---------------------------------------------------------------------------
 # list‑plugins
 # ---------------------------------------------------------------------------
-
 
 @cli.command("list-plugins")
 def list_plugins():
@@ -228,11 +228,9 @@ def list_plugins():
     for ep in eps:
         click.echo(f"- {ep.name}: {ep.value}")
 
-
 # ---------------------------------------------------------------------------
 # start / stop / logs
 # ---------------------------------------------------------------------------
-
 
 @cli.command()
 @click.option("--compose-dir", default=".", type=click.Path(file_okay=False, path_type=Path))
@@ -242,7 +240,6 @@ def start(compose_dir: Path):
     exit_code = _docker_compose_cmd("up", "-d", cwd=compose_dir)
     sys.exit(exit_code)
 
-
 @cli.command()
 @click.option("--compose-dir", default=".", type=click.Path(file_okay=False, path_type=Path))
 def stop(compose_dir: Path):
@@ -250,7 +247,6 @@ def stop(compose_dir: Path):
 
     exit_code = _docker_compose_cmd("down", cwd=compose_dir)
     sys.exit(exit_code)
-
 
 @cli.command()
 @click.option("--compose-dir", default=".", type=click.Path(file_okay=False, path_type=Path))
@@ -266,11 +262,9 @@ def logs(compose_dir: Path, follow: bool, lines: int):
     exit_code = _docker_compose_cmd(*args, cwd=compose_dir)
     sys.exit(exit_code)
 
-
 # ---------------------------------------------------------------------------
 # Entrypoint for *python -m vargard_core.cli* (helpful for local testing)
 # ---------------------------------------------------------------------------
-
 
 if __name__ == "__main__":
     cli()

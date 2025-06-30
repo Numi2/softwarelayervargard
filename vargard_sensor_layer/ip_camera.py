@@ -7,6 +7,7 @@ import cv2
 import time
 from .base_sensor import BaseSensor
 
+
 class IPCamera(BaseSensor):
     def __init__(self, rtsp_url: str, sensor_id: str = None):
         sid = sensor_id or f'ip_camera_{rtsp_url}'
@@ -25,6 +26,7 @@ class IPCamera(BaseSensor):
             'timestamp': time.time()
         }
         return frame, metadata
+
     def close(self):
         """
         Release the IP camera video capture.

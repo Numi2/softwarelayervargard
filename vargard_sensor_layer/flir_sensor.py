@@ -7,6 +7,7 @@ import cv2
 import time
 from .base_sensor import BaseSensor
 
+
 class FlirSensor(BaseSensor):
     def __init__(self, device_path: str):
         sensor_id = f'flir_{device_path.split('/')[-1]}'
@@ -25,6 +26,7 @@ class FlirSensor(BaseSensor):
             'timestamp': time.time()
         }
         return frame, metadata
+
     def close(self):
         """
         Release the FLIR video capture.
