@@ -14,6 +14,7 @@ from .flir_sensor import FlirSensor
 from .ip_camera import IPCamera
 from .radar_sensor import RadarSensor
 
+
 class SensorManager:
     def __init__(self, config_file: str = None):
         self.config_file = config_file
@@ -24,14 +25,14 @@ class SensorManager:
         # Reset sensor list before (re)detecting
         self.sensors = []
         detected = []
-        
+
         # Detect USB cameras (/dev/video*)
         video_devices = sorted(glob.glob('/dev/video*'))
         for dev in video_devices:
             try:
                 # Extract device index
                 dev_idx = int(dev.replace('/dev/video', ''))
-                
+
                 # Test if device is accessible
                 cap = cv2.VideoCapture(dev_idx)
                 if cap.isOpened():
@@ -42,13 +43,16 @@ class SensorManager:
                         sensor_type = 'usb_camera'
                         try:
                             info = subprocess.check_output(
-                                ['v4l2-ctl', '-d', dev, '--info'], 
-                                stderr=subprocess.DEVNULL, 
+                                ['v4l2-ctl', '-d', dev, '--info'],
+                                stderr=subprocess.DEVNULL,
                                 timeout=5
                             ).decode()
                             if 'FLIR' in info.upper():
                                 sensor_type = 'flir_thermal'
-                        except (subprocess.TimeoutExpired, subprocess.CalledProcessError, FileNotFoundError):
+                        except (
+                            subprocess.TimeoutExpired,
+                            subprocess.CalledProcessError,
+                            FileNotFoundError):
                             # v4l2-ctl not available or failed, stick with usb_camera
                             pass
                         detected.append((sensor_type, dev_idx))
@@ -99,14 +103,14 @@ class SensorManager:
                         sensor = RadarSensor(conn)
                     else:
                         continue
-                    
+
                     if sensor:
                         # No calibration or extrinsics for auto-detected sensors
                         setattr(sensor, 'calibration_file', None)
                         setattr(sensor, 'parent_frame', None)
                         setattr(sensor, 'extrinsics', None)
                         self.sensors.append(sensor)
-                        
+
                 except Exception as e:
                     print(f'Failed to initialize {sensor_type} ({conn}): {e}')
                     # Continue with other sensors even if one fails
@@ -128,7 +132,10 @@ class SensorManager:
                         elif stype == 'ip_camera':
                             sensor = IPCamera(entry.get('rtsp_url'))
                         elif stype == 'radar':
-                            sensor = RadarSensor(entry.get('port'), entry.get('baudrate', 115200))
+                            sensor = RadarSensor(
+                                entry.get('port'),
+                                entry.get('baudrate',
+                                115200))
                         else:
                             continue
                         # Attach calibration and extrinsics if provided
@@ -143,6 +150,7 @@ class SensorManager:
 
     def get_sensors(self):
         return self.sensors
+
     def refresh(self):
         """
         Re-detect sensors and update the internal list.

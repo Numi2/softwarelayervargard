@@ -10,7 +10,11 @@ from datetime import datetime, timedelta
 
 from flask import Flask, jsonify, Response, request
 from flask_cors import CORS
-from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
+from flask_jwt_extended import (
+    JWTManager,
+    create_access_token,
+    jwt_required,
+    get_jwt_identity)
 import paho.mqtt.client as mqtt
 
 # Configuration
@@ -45,7 +49,7 @@ sensors_data = [
     },
     {
         'id': 'csi_camera',
-        'type': 'csi_camera', 
+        'type': 'csi_camera',
         'status': 'healthy',
         'fps': 30,
         'resolution': '1920x1080',
@@ -98,15 +102,18 @@ users = {
 }
 
 # MQTT Client Setup
+
+
 def on_connect(client, userdata, flags, rc):
     print(f"Dashboard MQTT connected (rc={rc})")
     client.subscribe([(TELEMETRY_TOPIC, 0), (ALERTS_TOPIC, 0)])
+
 
 def on_message(client, userdata, msg):
     try:
         data = json.loads(msg.payload.decode('utf-8'))
         timestamp = datetime.now()
-        
+
         if msg.topic == TELEMETRY_TOPIC:
             data['received_at'] = timestamp.isoformat()
             telemetry_history.append(data)
@@ -133,7 +140,7 @@ except Exception as e:
 def login():
     username = request.json.get('username', '')
     password = request.json.get('password', '')
-    
+
     if username in users and users[username]['password'] == password:
         access_token = create_access_token(
             identity=username,
@@ -146,7 +153,7 @@ def login():
                 'role': users[username]['role']
             }
         })
-    
+
     return jsonify({'message': 'Invalid credentials'}), 401
 
 @app.route('/api/auth/verify', methods=['GET'])
@@ -168,6 +175,7 @@ def get_telemetry():
 
 @app.route('/api/telemetry/stream')
 def stream_telemetry():
+
     def generate():
         last_index = 0
         while True:
@@ -186,6 +194,7 @@ def get_alerts():
 
 @app.route('/api/alerts/stream')
 def stream_alerts():
+
     def generate():
         last_index = 0
         while True:
@@ -341,7 +350,7 @@ def get_system_status():
         },
         'alerts': {
             'total': len(alerts_history),
-            'recent': len([a for a in alerts_history if 
+            'recent': len([a for a in alerts_history if
                           datetime.fromisoformat(a['received_at']) > datetime.now() - timedelta(hours=24)])
         }
     })

@@ -6,6 +6,7 @@ from launch import LaunchDescription
 from launch_ros.actions import Node
 from ament_index_python.packages import get_package_share_directory
 
+
 def generate_launch_description():
     # Paths to configs
     sensor_pkg = get_package_share_directory('vargard_sensor_layer')

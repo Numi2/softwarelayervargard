@@ -4,6 +4,7 @@ YOLOv5 inference plugin using torch.hub.
 import torch
 from ..inference_plugin import InferencePlugin
 
+
 class YOLOv5Plugin(InferencePlugin):
     def __init__(self):
         super().__init__()
@@ -14,7 +15,10 @@ class YOLOv5Plugin(InferencePlugin):
         model_path = params.get('model_path', 'yolov5s')
         # load model
         try:
-            self.model = torch.hub.load('ultralytics/yolov5', 'custom', path=model_path)
+            self.model = torch.hub.load(
+                'ultralytics/yolov5',
+                'custom',
+                path=model_path)
         except Exception:
             # fallback to default
             self.model = torch.hub.load('ultralytics/yolov5', model_path)

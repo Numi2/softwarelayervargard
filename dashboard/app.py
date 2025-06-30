@@ -17,9 +17,11 @@ app = Flask(__name__)
 telemetry_history = deque(maxlen=MAX_HISTORY)
 alerts_history = deque(maxlen=MAX_HISTORY)
 
+
 def on_connect(client, userdata, flags, rc):
     print(f"Dashboard MQTT connected (rc={rc})")
     client.subscribe([(TELEMETRY_TOPIC, 0), (ALERTS_TOPIC, 0)])
+
 
 def on_message(client, userdata, msg):
     try:
@@ -48,7 +50,9 @@ def get_alerts():
     n = int(request.args.get('n', len(alerts_history)))
     return jsonify(list(alerts_history)[-n:])
 
+
 def stream_data(history):
+
     def generate():
         last_index = 0
         while True:

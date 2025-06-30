@@ -7,12 +7,14 @@ import time
 from abc import ABC, abstractmethod
 from enum import Enum
 
+
 class SensorStatus(Enum):
     """Sensor health status enumeration."""
     HEALTHY = "healthy"
     DEGRADED = "degraded"
     FAILED = "failed"
     DISCONNECTED = "disconnected"
+
 
 class BaseSensor(ABC):
     def __init__(self, sensor_id: str, sensor_type: str):
@@ -41,7 +43,7 @@ class BaseSensor(ABC):
     def reconnect(self):
         """
         Attempt to reconnect to the sensor.
-        
+
         Returns:
             bool: True if reconnection successful, False otherwise
         """
@@ -50,18 +52,18 @@ class BaseSensor(ABC):
     def update_health_status(self, success: bool):
         """Update sensor health based on operation success."""
         current_time = time.time()
-        
+
         if success:
             self.last_frame_time = current_time
             self.total_frames += 1
             self.reconnect_attempts = 0
-            
+
             # Improve status if we were degraded
             if self.status == SensorStatus.DEGRADED and self.error_count == 0:
                 self.status = SensorStatus.HEALTHY
         else:
             self.error_count += 1
-            
+
             # Degrade status based on error count
             if self.error_count >= 10:
                 self.status = SensorStatus.FAILED

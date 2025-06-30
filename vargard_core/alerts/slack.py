@@ -3,6 +3,7 @@ Slack alert sender using incoming webhook.
 """
 import requests
 
+
 def send_slack(webhook_url: str, message: str):
     """
     Send a text message to a Slack channel via incoming webhook.
