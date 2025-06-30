@@ -1,0 +1,108 @@
+version: '3.8'
+services:
+  sensor-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.sensor
+    network_mode: host
+    volumes:
+      - ./sensors.yaml:/workspace/sensors.yaml:ro
+      - ./vargard_sensor_layer:/workspace/vargard_sensor_layer:rw
+      - ./security:/workspace/security:rw
+      - /dev:/dev  # For camera access
+    privileged: true  # For hardware access in development
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_BIND_SERVICE
+      - SYS_ADMIN  # For device access
+    environment:
+      - ROS_DOMAIN_ID=0
+      - PYTHONPATH=/workspace
+    command: >
+      bash -c "source /workspace/install/setup.bash && 
+               ros2 run vargard_sensor_layer sensor_node --ros-args 
+               -p config_file:=/workspace/sensors.yaml 
+               -p enable_diagnostics:=True 
+               -p hotplug_interval:=2.0"
+    healthcheck:
+      test: ["CMD", "bash", "-lc", "ros2 topic list | grep /sensor"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  inference-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.inference
+    network_mode: host
+    depends_on:
+      sensor-dev:
+        condition: service_healthy
+    volumes:
+      - ./vargard_core:/workspace/vargard_core:rw
+      - ./security:/workspace/security:rw
+    environment:
+      - ROS_DOMAIN_ID=0
+      - PYTHONPATH=/workspace
+    command: >
+      bash -c "source /workspace/install/setup.bash && 
+               ros2 run vargard_core inference_node --ros-args 
+               -p enable_diagnostics:=True"
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_BIND_SERVICE
+    healthcheck:
+      test: ["CMD", "bash", "-lc", "ros2 topic list | grep /vargard/events"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  event-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.event
+    network_mode: host
+    depends_on:
+      inference-dev:
+        condition: service_healthy
+    volumes:
+      - ./rules.yaml:/workspace/rules.yaml:ro
+      - ./vargard_core:/workspace/vargard_core:rw
+      - ./security:/workspace/security:rw
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_BIND_SERVICE
+    environment:
+      - ROS_DOMAIN_ID=0
+      - PYTHONPATH=/workspace
+    command: >
+      bash -c "source /workspace/install/setup.bash && 
+               ros2 run vargard_core event_manager --ros-args 
+               -p rules_file:=/workspace/rules.yaml 
+               -p enable_diagnostics:=True"
+    healthcheck:
+      test: ["CMD", "bash", "-lc", "ros2 topic list | grep /vargard/alerts"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  # Development dashboard for testing
+  dashboard-dev:
+    build:
+      context: ./dashboard
+      dockerfile_inline: |
+        FROM python:3.9-slim
+        WORKDIR /app
+        COPY requirements.txt .
+        RUN pip install -r requirements.txt
+        COPY . .
+        EXPOSE 5000
+        CMD ["python", "app.py"]
+    ports:
+      - "5000:5000"
+    environment:
+      - MQTT_BROKER=localhost
+      - MQTT_PORT=1883

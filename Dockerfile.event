@@ -30,7 +30,11 @@ COPY security /workspace/security
 RUN source /opt/ros/${ROS_DISTRO}/setup.sh && \
     colcon build --packages-select vargard_core --symlink-install
 
-# Runtime
+# Runtime with optional DDS security
 ENTRYPOINT ["/bin/bash", "-lc", \
     "source /workspace/install/setup.bash && \
-     ros2 run vargard_core event_manager --ros-args -p rules_file:=/workspace/rules.yaml --enclave /workspace/security/keystore > /var/log/vargard/event_manager.log 2>&1" ]
+     if [ -d /workspace/security/keystore ] && [ -n \"$(ls -A /workspace/security/keystore 2>/dev/null)\" ]; then \
+       ros2 run vargard_core event_manager --ros-args -p rules_file:=/workspace/rules.yaml --enclave /workspace/security/keystore -p enable_diagnostics:=True; \
+     else \
+       ros2 run vargard_core event_manager --ros-args -p rules_file:=/workspace/rules.yaml -p enable_diagnostics:=True; \
+     fi > /var/log/vargard/event_manager.log 2>&1" ]

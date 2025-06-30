@@ -24,44 +24,71 @@ class SensorManager:
         # Reset sensor list before (re)detecting
         self.sensors = []
         detected = []
+        
         # Detect USB cameras (/dev/video*)
-        video_devices = glob.glob('/dev/video*')
+        video_devices = sorted(glob.glob('/dev/video*'))
         for dev in video_devices:
             try:
-                cap = cv2.VideoCapture(dev)
+                # Extract device index
+                dev_idx = int(dev.replace('/dev/video', ''))
+                
+                # Test if device is accessible
+                cap = cv2.VideoCapture(dev_idx)
                 if cap.isOpened():
-                    # detect FLIR thermal cameras by device info
-                    sensor_type = 'usb_camera'
-                    try:
-                        info = subprocess.check_output(['v4l2-ctl', '-d', dev, '--info'], stderr=subprocess.DEVNULL).decode()
-                        if 'FLIR' in info:
-                            sensor_type = 'flir_thermal'
-                    except Exception:
-                        pass
-                    detected.append((sensor_type, dev))
+                    # Check if we can actually read frames
+                    ret, frame = cap.read()
+                    if ret and frame is not None:
+                        # Detect FLIR thermal cameras by device info
+                        sensor_type = 'usb_camera'
+                        try:
+                            info = subprocess.check_output(
+                                ['v4l2-ctl', '-d', dev, '--info'], 
+                                stderr=subprocess.DEVNULL, 
+                                timeout=5
+                            ).decode()
+                            if 'FLIR' in info.upper():
+                                sensor_type = 'flir_thermal'
+                        except (subprocess.TimeoutExpired, subprocess.CalledProcessError, FileNotFoundError):
+                            # v4l2-ctl not available or failed, stick with usb_camera
+                            pass
+                        detected.append((sensor_type, dev_idx))
                 cap.release()
-            except Exception:
+            except (ValueError, cv2.error, Exception):
+                # Skip invalid devices
                 pass
 
-        # Detect CSI camera
+        # Detect CSI camera (Jetson specific)
         try:
-            csi = CsiCamera()
+            # Try to create CSI camera to test availability
+            test_csi = CsiCamera()
+            # If successful, add to detected list
             detected.append(('csi_camera', None))
+            # Clean up test instance
+            try:
+                test_csi.close()
+            except:
+                pass
         except Exception:
+            # CSI camera not available
             pass
 
-        # Detect radar serial ports
-        serial_ports = glob.glob('/dev/ttyUSB*') + glob.glob('/dev/ttyACM*')
+        # Detect radar serial ports with basic validation
+        serial_ports = sorted(glob.glob('/dev/ttyUSB*') + glob.glob('/dev/ttyACM*'))
         for port in serial_ports:
-            detected.append(('radar', port))
+            try:
+                # Basic check if port exists and is accessible
+                if os.path.exists(port) and os.access(port, os.R_OK | os.W_OK):
+                    detected.append(('radar', port))
+            except Exception:
+                pass
 
         if detected:
             # Instantiate detected sensors
             for sensor_type, conn in detected:
                 try:
+                    sensor = None
                     if sensor_type == 'usb_camera':
-                        idx = int(conn.replace('/dev/video', ''))
-                        sensor = UsbCamera(idx)
+                        sensor = UsbCamera(conn)  # conn is already device index
                     elif sensor_type == 'csi_camera':
                         sensor = CsiCamera()
                     elif sensor_type == 'flir_thermal':
@@ -72,13 +99,17 @@ class SensorManager:
                         sensor = RadarSensor(conn)
                     else:
                         continue
-                    # No calibration or extrinsics for auto-detected sensors
-                    setattr(sensor, 'calibration_file', None)
-                    setattr(sensor, 'parent_frame', None)
-                    setattr(sensor, 'extrinsics', None)
-                    self.sensors.append(sensor)
+                    
+                    if sensor:
+                        # No calibration or extrinsics for auto-detected sensors
+                        setattr(sensor, 'calibration_file', None)
+                        setattr(sensor, 'parent_frame', None)
+                        setattr(sensor, 'extrinsics', None)
+                        self.sensors.append(sensor)
+                        
                 except Exception as e:
-                    print(f'Failed to init {sensor_type} ({conn}): {e}')
+                    print(f'Failed to initialize {sensor_type} ({conn}): {e}')
+                    # Continue with other sensors even if one fails
         else:
             # Fallback to YAML config
             if self.config_file and os.path.exists(self.config_file):

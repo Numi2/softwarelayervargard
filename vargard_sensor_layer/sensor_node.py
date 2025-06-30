@@ -116,8 +116,16 @@ class SensorNode(Node):
                 # Update diagnostics timestamp
                 if self.enable_diagnostics:
                     self.last_data_time[sid] = time.time()
+                    
             except Exception as e:
                 self.get_logger().warn(f'Error reading sensor {sid}: {e}')
+                # Check if sensor needs reconnection
+                if hasattr(sensor, 'status') and sensor.status.value == 'failed':
+                    self.get_logger().info(f'Attempting to reconnect sensor {sid}')
+                    if hasattr(sensor, 'attempt_reconnect') and sensor.attempt_reconnect():
+                        self.get_logger().info(f'Successfully reconnected sensor {sid}')
+                    else:
+                        self.get_logger().warn(f'Failed to reconnect sensor {sid}')
 
     def _get_qos(self, sensor, info=False):
         # QoS tuning per sensor type
@@ -216,17 +224,48 @@ class SensorNode(Node):
         now = time.time()
         diag_arr = DiagnosticArray()
         diag_arr.header.stamp = self.get_clock().now().to_msg()
-        for sid in self.sensor_objects:
+        
+        for sid, sensor in self.sensor_objects.items():
             ds = DiagnosticStatus()
             ds.name = f'sensor_layer/{sid}'
             ds.hardware_id = sid
-            last = self.last_data_time.get(sid, 0.0)
-            if now - last > 2.0:
-                ds.level = DiagnosticStatus.ERROR
-                ds.message = f'No data for >2s ({now - last:.1f}s)'
+            
+            # Get sensor health info if available
+            if hasattr(sensor, 'get_health_info'):
+                health_info = sensor.get_health_info()
+                status = health_info.get('status', 'unknown')
+                error_count = health_info.get('error_count', 0)
+                total_frames = health_info.get('total_frames', 0)
+                
+                # Set diagnostic level based on sensor status
+                if status == 'healthy':
+                    ds.level = DiagnosticStatus.OK
+                    ds.message = f'Healthy - {total_frames} frames, {error_count} errors'
+                elif status == 'degraded':
+                    ds.level = DiagnosticStatus.WARN
+                    ds.message = f'Degraded - {error_count} recent errors'
+                elif status == 'failed':
+                    ds.level = DiagnosticStatus.ERROR
+                    ds.message = f'Failed - {error_count} errors, attempting reconnection'
+                else:
+                    ds.level = DiagnosticStatus.STALE
+                    ds.message = f'Unknown status: {status}'
+                    
+                # Add detailed health info as key-value pairs
+                from diagnostic_msgs.msg import KeyValue
+                for key, value in health_info.items():
+                    if value is not None:
+                        ds.values.append(KeyValue(key=key, value=str(value)))
             else:
-                ds.level = DiagnosticStatus.OK
-                ds.message = 'OK'
+                # Fallback to time-based diagnostics
+                last = self.last_data_time.get(sid, 0.0)
+                if now - last > 2.0:
+                    ds.level = DiagnosticStatus.ERROR
+                    ds.message = f'No data for >2s ({now - last:.1f}s)'
+                else:
+                    ds.level = DiagnosticStatus.OK
+                    ds.message = 'OK'
+                    
             diag_arr.status.append(ds)
         self.diag_pub.publish(diag_arr)
     def _diag_status(self, stat):

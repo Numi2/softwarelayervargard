@@ -15,7 +15,7 @@ RUN apt-get update && apt-get install -y \
     python3-pip \
     ros-${ROS_DISTRO}-diagnostic-updater \
     && rm -rf /var/lib/apt/lists/* && \
-    pip3 install setuptools pkg_resources
+    pip3 install setuptools
 
 # Workspace setup
 WORKDIR /workspace
@@ -33,5 +33,5 @@ COPY security /workspace/security
 RUN source /opt/ros/${ROS_DISTRO}/setup.sh && \
     colcon build --packages-select vargard_core --symlink-install
 
-# Runtime execution with DDS security and structured logs
-ENTRYPOINT ["/bin/bash", "-lc", "source /workspace/install/setup.bash && ros2 run vargard_core inference_node --ros-args --enclave /workspace/security/keystore > /var/log/vargard/inference_node.log 2>&1"]
+# Runtime execution with optional DDS security and structured logs
+ENTRYPOINT ["/bin/bash", "-lc", "source /workspace/install/setup.bash && if [ -d /workspace/security/keystore ] && [ -n \"$(ls -A /workspace/security/keystore 2>/dev/null)\" ]; then ros2 run vargard_core inference_node --ros-args --enclave /workspace/security/keystore -p enable_diagnostics:=True; else ros2 run vargard_core inference_node --ros-args -p enable_diagnostics:=True; fi > /var/log/vargard/inference_node.log 2>&1"]
