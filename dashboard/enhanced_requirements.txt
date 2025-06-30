@@ -1,0 +1,5 @@
+flask>=2.3.0
+flask-cors>=4.0.0
+flask-jwt-extended>=4.5.0
+paho-mqtt>=1.6.0
+python-dateutil>=2.8.0
