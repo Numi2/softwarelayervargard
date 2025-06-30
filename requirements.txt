@@ -6,7 +6,7 @@ requests>=2.25.0
 psutil>=5.8.0
 paho-mqtt>=1.5.0
 click>=8.0.0
-ultralytics>=8.0.0
+ultralytics>=8.1.0
 
 # ROS2 dependencies (install via apt/rosdep)
 # rclpy
@@ -16,8 +16,8 @@ ultralytics>=8.0.0
 # diagnostic-updater
 # diagnostic-msgs
 
-# Camera info manager (Python package)
-camera-info-manager>=0.2.0
+# Camera info manager (Python package) - Not available in PyPI
+# camera-info-manager>=0.2.0
 
 # Development dependencies
 pytest>=6.0.0
