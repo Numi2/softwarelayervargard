@@ -114,15 +114,8 @@ class YOLOv8Plugin(InferencePlugin):
                     clss = r.boxes.cls.cpu().numpy().astype(int)
 
                     # Convert to detection format
-                    for (
-                        x1,
-                        y1,
-                        x2,
-                        y2),
-                        conf,
-                        cls_id in zip(xyxy,
-                        confs,
-                        clss):
+                    for (x1, y1, x2, y2), conf, cls_id in zip(
+                            xyxy, confs, clss):
                         detection = {
                             'bbox': [float(
                                 x1),

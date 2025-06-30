@@ -241,9 +241,9 @@ class SensorNode(Node):
         added = new_ids - old_ids
         removed = old_ids - new_ids
         if added or removed:
-            self.get_logger(
-                ).info(f'Sensors changed. Added: {added},
-                Removed: {removed}')
+            self.get_logger().info(
+                f'Sensors changed. Added: {added}, '
+                f'Removed: {removed}')
             for sid in removed:
                 self._remove_sensor(sid)
             for sensor in new_list:

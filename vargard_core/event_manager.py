@@ -94,9 +94,9 @@ class EventManager(Node):
 
             stat.summary(
                 DiagnosticStatus.OK,
-                f'Running - {len(rule_stats)} rules,
-                {total_triggers} triggers,
-                {total_errors} errors')
+                f'Running - {len(rule_stats)} rules, '
+                f'{total_triggers} triggers, '
+                f'{total_errors} errors')
 
             # Add detailed rule statistics
             from diagnostic_msgs.msg import KeyValue
