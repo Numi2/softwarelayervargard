@@ -8,16 +8,20 @@ paho-mqtt>=1.5.0
 click>=8.0.0
 ultralytics>=8.0.0
 
-# ROS2 dependencies (install via apt/rosdep)
-# rclpy
-# sensor-msgs
-# std-msgs
-# cv-bridge
-# diagnostic-updater
-# diagnostic-msgs
-
-# Camera info manager (Python package)
-camera-info-manager>=0.2.0
+# ROS2 dependencies (install via apt/rosdep or colcon)
+# These packages are typically installed as part of ROS 2 setup:
+# - rclpy
+# - sensor-msgs
+# - std-msgs  
+# - cv-bridge
+# - diagnostic-updater
+# - diagnostic-msgs
+# - camera-info-manager-py (ros2 package)
+#
+# To install ROS 2 dependencies:
+# 1. Source your ROS 2 installation: source /opt/ros/<distro>/setup.bash
+# 2. Install via apt: sudo apt install ros-<distro>-camera-info-manager-py
+# 3. Or build from source with colcon if needed
 
 # Development dependencies
 pytest>=6.0.0

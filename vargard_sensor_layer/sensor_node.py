@@ -11,7 +11,28 @@ from sensor_msgs.msg import Image, CameraInfo
 from std_msgs.msg import String
 from diagnostic_msgs.msg import DiagnosticArray, DiagnosticStatus
 from cv_bridge import CvBridge
-from camera_info_manager import CameraInfoManager
+try:
+    from camera_info_manager import CameraInfoManager
+    HAS_CAMERA_INFO_MANAGER = True
+except ImportError:
+    HAS_CAMERA_INFO_MANAGER = False
+    # Fallback implementation for when camera_info_manager is not available
+    class CameraInfoManager:
+        def __init__(self, node, camera_name, url=''):
+            self.node = node
+            self.camera_name = camera_name
+            self.url = url
+            self._camera_info = None
+            
+        def getCameraInfo(self):
+            from sensor_msgs.msg import CameraInfo
+            if self._camera_info is None:
+                self._camera_info = CameraInfo()
+                # Set default values
+                self._camera_info.width = 640
+                self._camera_info.height = 480
+            return self._camera_info
+            
 import tf2_ros
 from geometry_msgs.msg import TransformStamped
 from builtin_interfaces.msg import Time as ROS2Time
@@ -156,6 +177,8 @@ class SensorNode(Node):
                     calib_url = cf
             ci_mgr = CameraInfoManager(self, sid, url=calib_url)
             self.ci_managers[sid] = ci_mgr
+            if not HAS_CAMERA_INFO_MANAGER and calib_url:
+                self.get_logger().warn(f'camera_info_manager not installed. Using fallback implementation for {sid}. Calibration file will not be loaded.')
         # Radar sensor
         elif sensor.sensor_type == 'radar':
             qos = self._get_qos(sensor)

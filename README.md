@@ -1,4 +1,14 @@
 # Vargard
+
+## Installation
+
+For detailed dependency installation instructions, see [INSTALL_DEPENDENCIES.md](INSTALL_DEPENDENCIES.md).
+
+**Quick fix for dependency errors:**
+```bash
+# Use the non-ROS requirements file if you get camera-info-manager errors
+pip install -r requirements-no-ros.txt
+```
   
 ## Sensor Layer (vargard_sensor_layer)
 
