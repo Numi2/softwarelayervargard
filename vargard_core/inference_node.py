@@ -8,7 +8,6 @@ from rclpy.qos import QoSProfile, QoSReliabilityPolicy
 from sensor_msgs.msg import Image, CameraInfo
 from std_msgs.msg import String
 from cv_bridge import CvBridge
-import os
 from diagnostic_updater import Updater
 from diagnostic_msgs.msg import DiagnosticArray, DiagnosticStatus
 

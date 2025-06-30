@@ -1,9 +1,5 @@
 
 """
-ROS2 node to publish sensor data on topics.
-"""
-
-"""
 ROS2 node to publish sensor data on topics, with camera_info, TF, QoS, hot‑plug & diagnostics support.
 """
 import os

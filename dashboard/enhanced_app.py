@@ -7,9 +7,8 @@ import time
 import threading
 from collections import deque
 from datetime import datetime, timedelta
-from functools import wraps
 
-from flask import Flask, jsonify, Response, request, g
+from flask import Flask, jsonify, Response, request
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
 import paho.mqtt.client as mqtt

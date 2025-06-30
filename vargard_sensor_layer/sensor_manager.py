@@ -66,7 +66,7 @@ class SensorManager:
             # Clean up test instance
             try:
                 test_csi.close()
-            except:
+            except Exception:
                 pass
         except Exception:
             # CSI camera not available

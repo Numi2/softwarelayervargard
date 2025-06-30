@@ -30,7 +30,6 @@ presence of *docker‑compose.yml* to avoid surprises.
 
 from __future__ import annotations
 
-import os
 import subprocess
 import sys
 from pathlib import Path
@@ -218,7 +217,7 @@ def list_plugins():
         from importlib.metadata import entry_points
 
         eps = entry_points(group="vargard.inference_plugins")
-    except Exception as exc:  # pragma: no cover  # noqa: pylint: disable=broad-except
+    except Exception as exc:  # pragma: no cover  # noqa: E722
         click.echo(f"Failed to load plugins: {exc}", err=True)
         sys.exit(1)
 

@@ -7,8 +7,7 @@ management without requiring actual ML models or heavy dependencies.
 
 import pytest
 import numpy as np
-from unittest.mock import Mock, patch, MagicMock
-from typing import List, Dict, Any
+from unittest.mock import Mock, patch
 
 # Import test utilities
 from conftest import assert_detection_valid

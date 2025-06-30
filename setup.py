@@ -1,5 +1,4 @@
 
-import os
 from setuptools import setup
 
 package_name = 'vargard_sensor_layer'
