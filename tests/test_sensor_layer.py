@@ -7,11 +7,9 @@ without heavy mocking or external dependencies.
 
 import pytest
 import yaml
-from unittest.mock import Mock, patch
-from pathlib import Path
 
 # Import test utilities
-from conftest import create_test_config, assert_detection_valid
+from conftest import create_test_config
 
 
 class TestSensorConfiguration:

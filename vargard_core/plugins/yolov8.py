@@ -81,7 +81,7 @@ class YOLOv8Plugin(InferencePlugin):
             # Test inference with dummy data to ensure model works
             import numpy as np
             dummy_image = np.zeros((640, 640, 3), dtype=np.uint8)
-            test_results = self.model(dummy_image, verbose=False)
+            self.model(dummy_image, verbose=False)  # Run test inference
             
             self.status = PluginStatus.READY
             

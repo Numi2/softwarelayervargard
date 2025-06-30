@@ -7,11 +7,10 @@ code duplication and ensure consistent test setup.
 
 import pytest
 import tempfile
-import json
 import yaml
 from pathlib import Path
-from typing import Dict, Any, List
-from unittest.mock import Mock, MagicMock
+from typing import Dict, Any
+from unittest.mock import Mock
 import numpy as np
 
 
