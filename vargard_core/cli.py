@@ -215,9 +215,9 @@ def list_plugins():
     """Show available inference plugins discovered via entry‑points."""
 
     try:
-        import pkg_resources  # pylint: disable=import-error
+        from importlib.metadata import entry_points
 
-        eps = list(pkg_resources.iter_entry_points("vargard.inference_plugins"))
+        eps = entry_points(group="vargard.inference_plugins")
     except Exception as exc:  # pragma: no cover  # noqa: pylint: disable=broad-except
         click.echo(f"Failed to load plugins: {exc}", err=True)
         sys.exit(1)
@@ -227,7 +227,7 @@ def list_plugins():
         return
 
     for ep in eps:
-        click.echo(f"- {ep.name}: {ep.module_name}.{ep.attrs[0]}")
+        click.echo(f"- {ep.name}: {ep.value}")
 
 
 # ---------------------------------------------------------------------------

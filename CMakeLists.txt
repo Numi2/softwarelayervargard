@@ -9,7 +9,7 @@ find_package(std_msgs REQUIRED)
 find_package(cv_bridge REQUIRED)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
-  "msg/SensorFrame.msg"
+  "vargard_sensor_layer/msg/SensorFrame.msg"
 )
 
 ament_python_install_package(${PROJECT_NAME})
